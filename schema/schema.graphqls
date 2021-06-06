@@ -69,6 +69,7 @@ type GitCommit implements GitObject {
     message: String!
     ancestors:  [GitCommit!]!
     refNotes: [String!]!
+    reachableBy: [GitRef!]!
 }
 
 type GitPrincipal {

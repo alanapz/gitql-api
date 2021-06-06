@@ -136,11 +136,11 @@ export class GitConfigFileParser implements GitConfigFile {
         check.nonNull(ref, "ref");
 
         // Skip if branch not configured
-        if (!this.branches.has(ref.branchName)) {
+        if (!this.branches.has(ref.name)) {
             return null;
         }
 
-        const branch = this.branches.get(ref.branchName);
+        const branch = this.branches.get(ref.name);
 
         // Or if branch has no upstream configured
         if (!branch.remoteName || !branch.upstreamName) {

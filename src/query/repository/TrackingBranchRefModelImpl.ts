@@ -1,9 +1,6 @@
-import { Check } from "src/check";
 import { TrackingBranchRef } from "src/git/types";
 import { RefModelImplSupport } from "src/query/repository/RefModelImplSupport";
 import { RepositoryModel, TrackingBranchRefModel } from "src/query/repository/types";
-
-const check: Check = require.main.require("./check");
 
 export class TrackingBranchRefModelImpl extends RefModelImplSupport implements TrackingBranchRefModel {
 
@@ -11,11 +8,8 @@ export class TrackingBranchRefModelImpl extends RefModelImplSupport implements T
 
     readonly kind = "TRACKING";
 
-    constructor(protected readonly _repository: RepositoryModel, protected readonly _ref: TrackingBranchRef, protected readonly _commitId: string) {
-        super();
-        check.nonNull(_repository, "repository");
-        check.nonNull(_ref, "_ref");
-        check.stringNonNullNotEmpty(_commitId, "commitId");
+    constructor(repository: RepositoryModel, private readonly _trackingRef: TrackingBranchRef, commitId: string) {
+        super(repository, _trackingRef, commitId);
     }
 
     get displayName() {
@@ -23,6 +17,6 @@ export class TrackingBranchRefModelImpl extends RefModelImplSupport implements T
     }
 
     get name() {
-        return `${this._ref.remoteName}/${this._ref.branchName}`;
+        return `${this._trackingRef.remote}/${this._trackingRef.name}`;
     }
 }

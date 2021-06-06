@@ -18,7 +18,7 @@ import { BranchRefModelImpl } from "src/query/repository/BranchRefModelImpl";
 import { CommitModelImpl } from "src/query/repository/CommitModelImpl";
 import { RefDistanceModel } from "src/query/repository/RefDistanceModel";
 import { StashRefModelImpl } from "src/query/repository/StashRefModelImpl";
-import { TagImpl } from "src/query/repository/TagImpl";
+import { TagRefModelImpl } from "src/query/repository/TagRefModelImpl";
 import { TrackingBranchRefModelImpl } from "src/query/repository/TrackingBranchRefModelImpl";
 import { TreeModelImpl } from "src/query/repository/TreeModel";
 import {
@@ -28,6 +28,7 @@ import {
     RefModel,
     RepositoryModel,
     StashRefModel,
+    TagRefModel,
     TrackingBranchRefModel,
     TreeModel,
     WorkingDirectoryModel
@@ -35,7 +36,7 @@ import {
 import { WorkingDirectoryModelImpl } from "src/query/repository/WorkingDirectoryModelImpl";
 import { asyncMap } from "src/utils/async-map";
 import { lazyValue } from "src/utils/lazy-value";
-import { as, if_not_found, IfNotFound, map_reducer, map_values, xxx_todo_fixme } from "src/utils/utils";
+import { as, if_not_found, IfNotFound, map_reducer, map_values } from "src/utils/utils";
 
 const check: Check = require.main.require("./check");
 
@@ -44,6 +45,7 @@ export class RepositoryModelImpl implements RepositoryModel {
     private readonly _allCommits = lazyValue<Map<string, CommitModel>>();
     private readonly _allBranches = lazyValue<Map<string, BranchRefModel>>();
     private readonly _allTrackingBranches = lazyValue<Map<string, TrackingBranchRefModel>>();
+    private readonly _allTags = lazyValue<Map<string, TagRefModel>>();
     private readonly _allStashes = lazyValue<Map<string, StashRefModel>>();
     private readonly _allRefs = lazyValue<Map<string, RefModel>>();
 
@@ -53,7 +55,6 @@ export class RepositoryModelImpl implements RepositoryModel {
     private readonly _cachedCommits = asyncMap<string, CommitModel>();
     private readonly _cachedBlobs = asyncMap<string, BlobModel>();
     private readonly _cachedTrees = asyncMap<string, TreeModel>();
-    private readonly _cachedTags = asyncMap<string, TagImpl>();
     private readonly _cachedRefDistances = asyncMap<string, RefDistanceModel>();
     private readonly _cachedWorkingDirectories = asyncMap<string, WorkingDirectoryModel>();
 
@@ -74,6 +75,13 @@ export class RepositoryModelImpl implements RepositoryModel {
             .filter(result => result.kind == 'TRACKING')
             .map(result => result as TrackingBranchRefModel)
             .reduce(map_reducer(branch => branch.ref.refName), new Map<string, TrackingBranchRefModel>()));
+    }
+
+    get allTags() {
+        return this._allTags.fetch(async () => (await map_values(this.allRefs))
+            .filter(tag => tag.kind == 'TAG')
+            .map(tag => tag as TagRefModel)
+            .reduce(map_reducer(tag => tag.ref.refName), new Map<string, TagRefModel>()));
     }
 
     get allStashes() {
@@ -98,8 +106,9 @@ export class RepositoryModelImpl implements RepositoryModel {
                     results.set(ref.refName, new TrackingBranchRefModelImpl(repository, ref, commitId));
                 },
 
-                tag(ref: TagRef, targetId: string): void {
-                    // Ignore tags
+                tag(ref: TagRef, commitId: string): void {
+                    // XXXX: TODO: FIXME - tag doesn't always point to a commit
+                    results.set(ref.refName, new TagRefModelImpl(repository, ref, commitId));
                 }
             }));
 
@@ -153,12 +162,8 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => check.error(`Tree not found: '${treeId}'`)});
     }
 
-    buildTag(tagName: string) {
-        check.stringNonNullNotEmpty(tagName, "tagName");
-        return this._cachedTags.fetch(tagName, async () => new TagImpl(this, tagName));
-    }
-
     async lookupRef(ref: Ref, ifNotFound: IfNotFound) {
+        check.nonNull(ref, "ref");
         if (isBranchRef(ref)) {
             return this.lookupBranch(ref, ifNotFound);
         }
@@ -188,7 +193,10 @@ export class RepositoryModelImpl implements RepositoryModel {
     }
 
     async lookupTag(ref: TagRef, ifNotFound: IfNotFound) {
-        throw xxx_todo_fixme();
+        return if_not_found({
+            value: ifNotFound,
+            result: (await this.allTags).get(ref.refName),
+            error: () => check.error(`Tag branch not found: '${ref.refName}'`)});
     }
 
     async lookupStash(ref: StashRef, ifNotFound: IfNotFound) {

@@ -1,6 +1,6 @@
 import { Check } from "src/check";
-import { GitLogLine, GitPrincipal } from "src/git/types";
-import { CommitModel, RepositoryModel, TreeModel } from "src/query/repository/types";
+import { GitLogLine, GitPrincipal, Ref } from "src/git/types";
+import { CommitModel, RefModel, RepositoryModel, TreeModel } from "src/query/repository/types";
 import { lazyValue } from "src/utils/lazy-value";
 
 const check: Check = require.main.require("./check");
@@ -28,6 +28,10 @@ export class CommitModelImpl implements CommitModel {
     private readonly _refNotes = lazyValue<string[]>();
 
     private readonly _allDetails = lazyValue<GitLogLine>();
+
+    private readonly _reachableByRefs = lazyValue<Ref[]>();
+
+    private readonly _reachableBy = lazyValue<RefModel[]>();
 
     constructor(readonly repository: RepositoryModel, private readonly _input: GitLogLine) {
         this._parentIds.setIfNotNull(_input.parentIds);
@@ -96,5 +100,13 @@ export class CommitModelImpl implements CommitModel {
             }
             throw check.error(`Unable to retrieve details for commit: '${this.id}'`);
         })
+    }
+
+    get reachableBy() {
+        return this._reachableBy.fetch(async () => {
+            const refs = await this._reachableByRefs.fetch(async () => Array.from(await this.repository.gitService.listCommitReachableBy(this.repository.path, this.id)));
+            console.log("refs", refs);
+            return Promise.all(refs.map(ref => this.repository.lookupRef(ref, 'throw')));
+        });
     }
 }

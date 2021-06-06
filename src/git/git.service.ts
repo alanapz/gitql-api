@@ -138,6 +138,11 @@ export class GitService {
         }
     }
 
+    // Returns all the refs that contain the specified commit
+    async listCommitReachableBy(repoPath: string, commitId: string): Promise<Generator<Ref>> {
+        const input = await this.gitExecute(['-C', repoPath, 'for-each-ref', '--contains', commitId]);
+        return GitUtils.parseForEachRef(input, commitId);
+    }
 
     async getLastFetchDate(repoPath: string): Promise<number|null> {
         check.stringNonNullNotEmpty(repoPath, "repoPath");

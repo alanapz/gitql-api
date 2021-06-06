@@ -1,13 +1,17 @@
 import { Ref } from "src/git/types";
-import { RepositoryModel } from "src/query/repository/types";
+import { CommitModel, RepositoryModel } from "src/query/repository/types";
+import { lazyValue } from "src/utils/lazy-value";
+import { xxx_todo_fixme } from "src/utils/utils";
 
 export abstract class RefModelImplSupport {
 
-    protected abstract _ref: Ref;
+    private readonly _commitId = lazyValue<string>();
 
-    protected abstract _repository: RepositoryModel;
+    private readonly _commit = lazyValue<CommitModel>();
 
-    protected abstract _commitId: string;
+    constructor(private readonly _repository: RepositoryModel, private readonly _ref: Ref, commitId: string) {
+        this._commitId.setIfNotNull(commitId);
+    }
 
     get ref() {
         return this._ref;
@@ -18,6 +22,9 @@ export abstract class RefModelImplSupport {
     }
 
     get commit() {
-        return Promise.resolve(this._repository.lookupCommit(this._commitId, 'throw'));
+        return this._commit.fetch(async () => {
+            const commitId = await this._commitId.fetch(async () => { throw xxx_todo_fixme(); });
+            return Promise.resolve(this._repository.lookupCommit(commitId, 'throw'));
+        });
     }
 }

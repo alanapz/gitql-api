@@ -21,7 +21,7 @@ export class StashRefModelImpl implements StashRefModel {
     }
 
     get displayName() {
-        return this.ref.stashName;
+        return this.ref.name;
     }
 
     get commit() {

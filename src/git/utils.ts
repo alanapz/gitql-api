@@ -12,6 +12,7 @@ import {
     ParseRefListCallback,
     Ref,
     StashRef,
+    TagRef,
     TrackingBranchRef,
     WorkingDirectoryItem
 } from "src/git/types";
@@ -34,9 +35,8 @@ export class GitUtils {
             return GitUtils.toTrackingBranchRef(input);
         }
 
-        if (input.match(/^refs\/tags\/(?<tag>.+)$/)) {
-            /// XXX: TODO: Handle tags
-            return null;
+        if (input.match(/^refs\/tags\/.+$/)) {
+            return GitUtils.toTagRef(input);
         }
 
         if (input.match(/^refs\/stash@{\d+}$/)) {
@@ -56,7 +56,7 @@ export class GitUtils {
             return {
                 kind: "BRANCH",
                 refName: input,
-                branchName: refMatcher.groups["branch"]
+                name: refMatcher.groups["branch"]
             };
         }
 
@@ -69,7 +69,7 @@ export class GitUtils {
         return {
             kind: "BRANCH",
             refName: `refs/heads/${input}`,
-            branchName: input
+            name: input
         };
     }
 
@@ -81,8 +81,8 @@ export class GitUtils {
             return {
                 kind: "TRACKING",
                 refName: input,
-                remoteName: refMatcher.groups["remote"],
-                branchName: refMatcher.groups["branch"]
+                remote: refMatcher.groups["remote"],
+                name: refMatcher.groups["branch"]
             };
         }
 
@@ -102,19 +102,46 @@ export class GitUtils {
         return {
             kind: "TRACKING",
             refName: `refs/remotes/${trackingMatcher.groups["remote"]}/${trackingMatcher.groups["branch"]}`,
-            remoteName: trackingMatcher.groups["remote"],
-            branchName: trackingMatcher.groups["branch"]
+            remote: trackingMatcher.groups["remote"],
+            name: trackingMatcher.groups["branch"]
+        };
+    }
+
+    static toTagRef(input: string): TagRef {
+
+        check.stringNonNullNotEmpty(input, 'input');
+
+        // If it's already a tag ref, great
+        const refMatcher = input.match(/^refs\/tags\/(?<name>.+)$/);
+        if (refMatcher) {
+            return {
+                kind: "TAG",
+                refName: input,
+                name: refMatcher.groups["name"]
+            };
+        }
+
+        // Fail if it's a different reftype
+        if (input.startsWith("refs/")) {
+            throw check.error(`Ref: '${input}' is not a tag ref`);
+        }
+
+        // Branch name, convert to ref
+        return {
+            kind: "TAG",
+            refName: `refs/tags/${input}`,
+            name: input
         };
     }
 
     static toStashRef(input: string): StashRef {
         // If it's already a stashref, great
-        const refMatcher = input.match(/^refs\/(?<stash>stash@{\d+})$/);
+        const refMatcher = input.match(/^refs\/(?<name>stash@{\d+})$/);
         if (refMatcher) {
             return {
                 kind: "STASH",
                 refName: input,
-                stashName: refMatcher.groups["stash"]
+                name: refMatcher.groups["name"]
             };
         }
 
@@ -131,7 +158,7 @@ export class GitUtils {
         return {
             kind: "STASH",
             refName: `refs/${input}`,
-            stashName: input
+            name: input
         };
     }
 
@@ -220,16 +247,24 @@ export class GitUtils {
             const refName = matcher.groups["name"];
 
             if ((matcher = refName.match(/^refs\/heads\/(?<branchName>.+)$/))) {
-                callback.branch({kind: "BRANCH", refName, branchName: matcher.groups["branchName"]}, targetId);
+                callback.branch({
+                    kind: "BRANCH",
+                    refName,
+                    name: matcher.groups["branchName"]},
+                    targetId);
             } else if ((matcher = refName.match(/^refs\/remotes\/(?<remoteName>.+?)\/(?<branchName>.+)$/))) {
                 callback.trackingBranch({
                     kind: "TRACKING",
                     refName,
-                    remoteName: matcher.groups["remoteName"],
-                    branchName: matcher.groups["branchName"]
+                    remote: matcher.groups["remoteName"],
+                    name: matcher.groups["branchName"]
                 }, targetId);
             } else if ((matcher = refName.match(/^refs\/tags\/(?<tagName>.+)$/))) {
-                callback.tag({kind: "TAG", refName, tagName: matcher.groups["tagName"]}, targetId);
+                callback.tag({
+                    kind: "TAG",
+                    refName,
+                    name: matcher.groups["tagName"]},
+                    targetId);
             } else if ((matcher = refName.match(/^refs\/stash$/))) {
                 // Ignore fake "stash" refs
             } else {
@@ -399,5 +434,18 @@ export class GitUtils {
             message: val.message,
             refNotes: val.refNotes
         };
+    }
+
+    // Returns all the refs that contain the specified commit
+    static *parseForEachRef(input: string, commitId: string): Generator<Ref> {
+        for (const inputLine of input.trim().split("\n").map(val => val.trim())) {
+            if (inputLine) {
+                const matcher = inputLine.trim().match(/^(?<commit>[a-f0-9]+)\s+(?<type>commit|tag)\s+(?<ref>.+)$/);
+                if (!matcher) {
+                    throw check.error(`Unparseable for-each-ref line: '${inputLine}' for commit: '${commitId}'`);
+                }
+                yield GitUtils.parseExplicitRef(matcher.groups["ref"]);
+            }
+        }
     }
 }

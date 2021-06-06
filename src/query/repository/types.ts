@@ -1,9 +1,8 @@
 import { GitWorkingDirectoryItemStatus } from "src/generated/graphql";
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitService } from "src/git/git.service";
-import { BranchRef, GitPrincipal, Ref, StashRef, TrackingBranchRef } from "src/git/types";
+import { BranchRef, GitPrincipal, Ref, StashRef, TagRef, TrackingBranchRef } from "src/git/types";
 import { RefDistanceModel } from "src/query/repository/RefDistanceModel";
-import { TagImpl } from "src/query/repository/TagImpl";
 import { IfNotFound } from "src/utils/utils";
 
 export interface BlobModelParams {
@@ -30,6 +29,7 @@ export interface CommitModel {
     subject: Promise<string>;
     message: Promise<string>;
     refNotes: Promise<string[]>;
+    reachableBy: Promise<RefModel[]>;
 }
 
 export interface TreeModel {
@@ -55,6 +55,11 @@ export interface BranchRefModel extends RefModel {
 
 export interface TrackingBranchRefModel extends RefModel {
     kind: "TRACKING";
+    name: string;
+}
+
+export interface TagRefModel extends RefModel {
+    kind: "TAG";
     name: string;
 }
 
@@ -109,14 +114,15 @@ export interface RepositoryModel {
     path: string
     allBranches: Promise<Map<string, BranchRefModel>>;
     allTrackingBranches: Promise<Map<string, TrackingBranchRefModel>>;
+    allTags: Promise<Map<string, TagRefModel>>;
     allStashes: Promise<Map<string, StashRefModel>>;
     lookupCommit: (commitId: string, ifNotFound: IfNotFound) => Promise<CommitModel>;
     lookupBlob: (blobId: string, ifNotFound: IfNotFound) => Promise<BlobModel>;
     lookupTree: (treeId: string, ifNotFound: IfNotFound) => Promise<TreeModel>;
-    buildTag: (tagName: string) => Promise<TagImpl>;
     lookupRef: (ref: Ref, ifNotFound: IfNotFound) => Promise<RefModel>;
     lookupBranch: (ref: BranchRef, ifNotFound: IfNotFound) => Promise<BranchRefModel>;
     lookupTrackingBranch: (ref: TrackingBranchRef, ifNotFound: IfNotFound) => Promise<TrackingBranchRefModel>;
+    lookupTag: (ref: TagRef, ifNotFound: IfNotFound) => Promise<TagRefModel>;
     lookupStash: (ref: StashRef, ifNotFound: IfNotFound) => Promise<StashRefModel>;
     buildRefDistance: (source: Ref, target: Ref, supplier: () => Promise<{ahead: number, behind: number, mergeBase: string}>) => Promise<RefDistanceModel>;
     gitService: GitService;
