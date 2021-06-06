@@ -1,19 +1,14 @@
-import { Check } from "src/check";
 import { GitWorkingDirectoryItemStatus } from "src/generated/graphql";
 import { WorkingDirectoryItem } from "src/git/types";
 import { WorkingDirectoryItemModel, WorkingDirectoryModel } from "src/query/repository/types";
-
-const check: Check = require.main.require("./check");
+import { lazyValue } from "src/utils/lazy-value";
 
 export class WorkingDirectoryItemModelImpl implements WorkingDirectoryItemModel {
 
-    constructor(private readonly _directory: WorkingDirectoryModel, private readonly _item: WorkingDirectoryItem) {
-        check.nonNull(_directory, "repository");
-        check.nonNull(_item, "item");
-    }
+    private readonly _status = lazyValue<GitWorkingDirectoryItemStatus[]>();
 
-    get directory() {
-        return this._directory;
+    constructor(readonly directory: WorkingDirectoryModel, private readonly _item: WorkingDirectoryItem) {
+
     }
 
     get path() {
@@ -21,34 +16,36 @@ export class WorkingDirectoryItemModelImpl implements WorkingDirectoryItemModel 
     }
 
     get status() {
-        const flags: GitWorkingDirectoryItemStatus[] = [];
-        if (this._item.added) {
-            flags.push(GitWorkingDirectoryItemStatus.ADDED);
-        }
-        if (this._item.copied) {
-            flags.push(GitWorkingDirectoryItemStatus.COPIED);
-        }
-        if (this._item.deleted) {
-            flags.push(GitWorkingDirectoryItemStatus.DELETED);
-        }
-        if (this._item.modified) {
-            flags.push(GitWorkingDirectoryItemStatus.MODIFIED);
-        }
-        if (this._item.typeChanged) {
-            flags.push(GitWorkingDirectoryItemStatus.TYPE_CHANGED);
-        }
-        if (this._item.unmerged) {
-            flags.push(GitWorkingDirectoryItemStatus.UNMERGED);
-        }
-        if (this._item.unknown) {
-            flags.push(GitWorkingDirectoryItemStatus.UNKNOWN);
-        }
-        if (this._item.broken) {
-            flags.push(GitWorkingDirectoryItemStatus.BROKEN);
-        }
-        if (this._item.untracked) {
-            flags.push(GitWorkingDirectoryItemStatus.UNTRACKED);
-        }
-        return Promise.resolve(flags);
+        return this._status.fetch(() => {
+            const flags: GitWorkingDirectoryItemStatus[] = [];
+            if (this._item.added) {
+                flags.push(GitWorkingDirectoryItemStatus.ADDED);
+            }
+            if (this._item.copied) {
+                flags.push(GitWorkingDirectoryItemStatus.COPIED);
+            }
+            if (this._item.deleted) {
+                flags.push(GitWorkingDirectoryItemStatus.DELETED);
+            }
+            if (this._item.modified) {
+                flags.push(GitWorkingDirectoryItemStatus.MODIFIED);
+            }
+            if (this._item.typeChanged) {
+                flags.push(GitWorkingDirectoryItemStatus.TYPE_CHANGED);
+            }
+            if (this._item.unmerged) {
+                flags.push(GitWorkingDirectoryItemStatus.UNMERGED);
+            }
+            if (this._item.unknown) {
+                flags.push(GitWorkingDirectoryItemStatus.UNKNOWN);
+            }
+            if (this._item.broken) {
+                flags.push(GitWorkingDirectoryItemStatus.BROKEN);
+            }
+            if (this._item.untracked) {
+                flags.push(GitWorkingDirectoryItemStatus.UNTRACKED);
+            }
+            return Promise.resolve(flags);
+        });
     }
 }

@@ -1,6 +1,6 @@
 import { Parent, ResolveField, Resolver } from "@nestjs/graphql";
 import { GitPrincipal } from "src/git/types";
-import { CommitModel, RepositoryModel, TreeModel } from "src/query/repository/types";
+import { CommitModel, RefModel, RepositoryModel, TreeModel } from "src/query/repository/types";
 
 @Resolver("GitCommit")
 export class CommitResolver {
@@ -65,5 +65,10 @@ export class CommitResolver {
     @ResolveField("refNotes")
     getRefNotes(@Parent() model: CommitModel): Promise<string[]> {
         return model.refNotes;
+    }
+
+    @ResolveField("reachableBy")
+    getReachableBy(@Parent() model: CommitModel): Promise<RefModel[]> {
+        return model.reachableBy;
     }
 }

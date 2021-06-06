@@ -1,4 +1,4 @@
-# gitql
+# gitql-api
 
 NestJS GraphQL front-end to low-level Git objects.
 

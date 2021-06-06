@@ -3,26 +3,26 @@ export type Ref = BranchRef | TrackingBranchRef | TagRef | StashRef;
 export interface BranchRef {
     kind: "BRANCH",
     refName: string;
-    branchName: string;
+    name: string;
 }
 
 export interface TrackingBranchRef {
     kind: "TRACKING",
     refName: string;
-    remoteName: string;
-    branchName: string;
+    remote: string;
+    name: string;
 }
 
 export interface TagRef {
     kind: "TAG",
     refName: string;
-    tagName: string;
+    name: string;
 }
 
 export interface StashRef {
     kind: "STASH",
     refName: string;
-    stashName: string;
+    name: string;
 }
 
 export interface GitPrincipal {
