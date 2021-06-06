@@ -1,0 +1,225 @@
+scalar GitTimestamp
+
+enum GitTagKind {
+    LIGHTWEIGHT
+    ANNOTATED
+    SIGNED
+}
+
+enum GitWorkingDirectoryItemStatus {
+    ADDED
+    COPIED
+    DELETED
+    MODIFIED
+    TYPE_CHANGED
+    UNMERGED
+    UNKNOWN
+    BROKEN
+    UNTRACKED
+}
+
+"Filter type which performs an implicit AND of all elements"
+input GitBranchFilter {
+    upstreamConfigured: Boolean
+}
+
+type Query {
+    repository(path: String!): GitRepository!
+    searchRepositories(startingPath: String): [GitRepository!]!
+}
+
+#type Mutation {
+#    repository(path: String!): GitRepositoryMutator
+#}
+
+type GitBlob implements GitObject {
+    id: String!
+    repository: GitRepository!
+    size: Int!
+    value: String!
+}
+
+"""Represents a local branch (ie: not a remote-tracking branch)"""
+type GitBranch implements GitRef {
+    """eg: main"""
+    branchName: String!
+    upstream: GitTrackingBranch
+    upstreamDistance: GitRefDistance
+    parent: GitTrackingBranch
+    parentDistance: GitRefDistance
+    """eg: refs/heads/main (inherited from GitRef)"""
+    refName: String!
+    """Same as branchName (inherited from GitRef)"""
+    displayName: String!
+    repository: GitRepository!
+    commit: GitCommit!
+    ancestors(count: Int!):  [GitCommit!]!
+    distance(refName: String): GitRefDistance
+}
+
+type GitCommit implements GitObject {
+    id: String!
+    repository: GitRepository!
+    firstParent: GitCommit
+    parents: [GitCommit!]!
+    tree: GitTree!
+    author: GitPrincipal!
+    committer: GitPrincipal !
+    subject: String!
+    message: String!
+    ancestors:  [GitCommit!]!
+    refNotes: [String!]!
+}
+
+type GitPrincipal {
+    name: String!
+    emailAddress: String!
+    timestamp: Int!
+}
+
+interface GitObject {
+    id: String!
+    repository: GitRepository!
+}
+
+"""A ref is a name that points to a commit (except for certain types of tags)"""
+interface GitRef {
+    refName: String!
+    displayName: String!
+    repository: GitRepository!
+    commit: GitCommit
+    ancestors(count: Int!):  [GitCommit!]!
+    distance(refName: String): GitRefDistance
+}
+
+type GitRefDistance {
+    mergeBase: GitCommit!
+    ahead: Int!
+    behind: Int!
+}
+
+type GitRemote {
+    name: String!
+    fetchUrl: [String!]!
+    pushUrls: [String!]!
+}
+
+type GitRepository {
+    path: String!
+    commit(id: String!): GitCommit
+    blob(id: String!): GitBlob
+    tree(id: String!): GitTree
+    ref(name: String!): GitRef
+    branches(filter: [GitBranchFilter!]): [GitBranch!]!
+    branch(name: String!): GitBranch
+    trackingBranches: [GitTrackingBranch!]!
+    trackingBranch(name: String!): GitTrackingBranch
+    stashes: [GitStash!]!
+    stash(name: String!): GitStash
+    #remotes: [GitRef!]!
+    lastFetchDate: GitTimestamp
+    head: GitRef
+    workingDirectory: GitWorkingDirectory
+}
+
+type GitRepositoryMutator {
+    path: String!
+}
+
+type GitStash implements GitRef {
+    """eg: refs/stash@{0} (inherited from GitRef)"""
+    refName: String!
+    """eg: stash@{1} (inherited from GitRef)"""
+    displayName: String!
+    repository: GitRepository!
+    commit: GitCommit!
+    ancestors(count: Int!):  [GitCommit!]!
+    distance(refName: String): GitRefDistance
+}
+
+type GitTag implements GitRef {
+    #tagName: String!
+    #tagKind: GitTagKind!
+    #target: GitObject!
+    #"""Only valid for tag type ANNOTATED"""
+    #message: String
+    #"""Only valid for tag type ANNOTATED"""
+    #tagger: GitCommitAuthor
+    # Inherited from GitRef
+    refName: String!
+    displayName: String!
+    repository: GitRepository!
+    commit: GitCommit
+    ancestors(count: Int!):  [GitCommit!]!
+    distance(refName: String): GitRefDistance
+}
+
+type GitTrackingBranch implements GitRef {
+    remote: GitRemote!
+    branchName: String!
+    # Inherited from GitRef
+    refName: String!
+    displayName: String!
+    repository: GitRepository!
+    commit: GitCommit!
+    ancestors(count: Int!):  [GitCommit!]!
+    distance(refName: String): GitRefDistance
+}
+
+type GitTree implements GitObject {
+    id: String!
+    repository: GitRepository!
+    items: [GitTreeItem!]!
+    "Returns the corresponding tree item for the name, recursively if necessary (eg: folder/subfolder/subsubfolder/file)"
+    item(name: String!): GitTreeItem
+    "Returns all items in the corresponding tree, recursively and including subfolders"
+    descendants: [GitTreeDescendant!]!
+}
+
+type GitTreeDescendant {
+    path: String!
+    item: GitTreeItem!
+}
+
+interface GitTreeItem {
+    tree: GitTree!
+    name: String!
+    mode: Int!
+}
+
+type GitTreeBlobItem implements GitTreeItem {
+    blob: GitBlob!
+    # Inherited from GitTreeItem
+    tree: GitTree!
+    name: String!
+    mode: Int!
+    testErrorXXX: String!
+}
+
+type GitTreeSubtreeItem implements GitTreeItem {
+    subtree: GitTree!
+    # Inherited from GitTreeItem
+    tree: GitTree!
+    name: String!
+    mode: Int!
+}
+
+type GitWorkingDirectory {
+    path: String!
+    repository: GitRepository!
+    staged: [GitWorkingDirectoryItem!]!
+    unstaged: [GitWorkingDirectoryItem!]!
+    untracked: [GitWorkingDirectoryItem!]!
+}
+
+type GitWorkingDirectoryItem {
+    directory: GitWorkingDirectory!
+    path: String!
+    status: [GitWorkingDirectoryItemStatus!]!
+}
+
+schema {
+    query: Query,
+    #mutation: Mutation
+}
+

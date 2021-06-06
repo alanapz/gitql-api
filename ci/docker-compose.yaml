@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  gitql-api:
+    container_name: gitql-api
+    image: alanmpinder/gitql-api:20210425
+    volumes:
+      - "gitql-api-data:/gitql"
+    ports:
+      - "3000:3000"
+    environment:
+      - GIT_URL=https://github.com/alanapz/gitql.git
+      - GIT_BRANCH=main
+
+volumes:
+  gitql-api-data:
+    driver: local
