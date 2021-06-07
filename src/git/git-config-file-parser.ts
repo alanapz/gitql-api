@@ -1,12 +1,10 @@
-import { Check } from "src/check";
+import { error } from "src/check";
 import { GitConfigFile, GitRefspecConfig, GitRemoteConfig } from "src/git/git-config-file";
 import { GitRefspecConfigImpl } from "src/git/git-refspec-config";
 import { BranchRef, TrackingBranchRef } from "src/git/types";
 import { GitUtils } from "src/git/utils";
 import { cacheMap } from "src/utils/cachemap";
 import { as } from "src/utils/utils";
-
-const check: Check = require.main.require("./check");
 
 class GitRemoteConfigImpl implements GitRemoteConfig {
     name: string;
@@ -64,12 +62,12 @@ export class GitConfigFileParser implements GitConfigFile {
         // Otherwise, it's a simple value so try and parse to add to current section
         const matcher = line.match(/^\s*(?<key>.+?)\s+=\s+(?<value>.+)$/);
         if (!matcher) {
-            throw check.error(`Unparseable config line: ${line}`);
+            throw error(`Unparseable config line: ${line}`);
         }
 
         // Not much we can do here
         if (!this.currentSection) {
-            throw check.error(`Unexpected line: ${line} (not in section)`);
+            throw error(`Unexpected line: ${line} (not in section)`);
         }
 
         this.currentSection(matcher.groups["key"], matcher.groups["value"]);
@@ -133,7 +131,6 @@ export class GitConfigFileParser implements GitConfigFile {
     // Returns the corresponding "upstream" for the given local branch
     // eg: dev -> refs/remotes/
     resolveUpstream(ref: BranchRef): TrackingBranchRef {
-        check.nonNull(ref, "ref");
 
         // Skip if branch not configured
         if (!this.branches.has(ref.name)) {
@@ -149,7 +146,7 @@ export class GitConfigFileParser implements GitConfigFile {
 
         const remote = this.remotes.get(branch.remoteName);
         if (!remote) {
-            throw check.error(`Unknown remote: ${branch.remoteName}`)
+            throw error(`Unknown remote: ${branch.remoteName}`)
         }
 
         const upstreamRef = GitUtils.toBranchRef(branch.upstreamName);

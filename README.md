@@ -21,7 +21,7 @@ Happily enough, the NestJS framework was a real joy to use.
 
 GraphQL quickstart: https://docs.nestjs.com/graphql/quick-start
 
-Query resolver: https://github.com/alanapz/gitql/blob/develop/gitql-api/src/query/repository/RepositoryResolver.ts
+Query resolver: https://github.com/alanapz/gitql/blob/develop/gitql-api/src/query/repository/repository-resolver.ts
 
 ## How To Run
 

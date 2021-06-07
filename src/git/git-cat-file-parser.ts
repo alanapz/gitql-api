@@ -1,8 +1,6 @@
-import { Check } from "src/check";
+import { error } from "src/check";
 import { GitObjectDetails } from "src/git/types";
 import { GitUtils } from "src/git/utils";
-
-const check: Check = require.main.require("./check");
 
 export class GitCatFileParser
 {
@@ -13,8 +11,7 @@ export class GitCatFileParser
     private buffer: string;
 
     constructor(private readonly objectFound: (object: GitObjectDetails) => void, private readonly objectMissing: (objectId: string) => void) {
-        check.nonNull(objectFound, "objectFound");
-        check.nonNull(objectMissing, "objectMissing");
+
     }
 
     processNext(next: string): void {
@@ -41,7 +38,7 @@ export class GitCatFileParser
             return;
         }
 
-        throw check.error(`Unexpected value: '${next}'`);
+        throw error(`Unexpected value: '${next}'`);
     }
 
     private consumeHeader(next: string): boolean {
@@ -68,7 +65,7 @@ export class GitCatFileParser
             console.log("X |" + completeObject + "|")
             const results = GitUtils.parseObjectDetailsList(completeObject);
             if (!results || results.length !== 1) {
-                throw check.error(`Unparseable result: '${results}'`);
+                throw error(`Unparseable result: '${results}'`);
             }
             this.objectFound(results[0]);
         }
@@ -107,7 +104,7 @@ export class GitCatFileParser
         }
 
         if (this.bytesRemaining < 0) {
-            throw check.error("Negative bytes remaining");
+            throw error("Negative bytes remaining");
         }
 
         return true;

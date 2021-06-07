@@ -1,6 +1,4 @@
-import { Check } from "src/check";
-
-const check: Check = require.main.require("./check");
+import { notNull } from "src/check";
 
 export function lazyValue<T>(): LazyValue<T> {
     return new LazyValue<T>();
@@ -21,7 +19,7 @@ export class LazyValue<T> {
     }
 
     fetch(resolver: () => Promise<T>): Promise<T> {
-        check.nonNull(resolver, "resolver");
+        notNull(resolver, "resolver");
 
         if (this._value) {
             return this._value;

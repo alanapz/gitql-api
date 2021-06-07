@@ -28,10 +28,6 @@ type Query {
     searchRepositories(startingPath: String): [GitRepository!]!
 }
 
-#type Mutation {
-#    repository(path: String!): GitRepositoryMutator
-#}
-
 type GitBlob implements GitObject {
     id: String!
     repository: GitRepository!
@@ -121,10 +117,6 @@ type GitRepository {
     lastFetchDate: GitTimestamp
     head: GitRef
     workingDirectory: GitWorkingDirectory
-}
-
-type GitRepositoryMutator {
-    path: String!
 }
 
 type GitStash implements GitRef {
@@ -221,6 +213,6 @@ type GitWorkingDirectoryItem {
 
 schema {
     query: Query,
-    #mutation: Mutation
+    mutation: Mutation
 }
 

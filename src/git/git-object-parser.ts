@@ -1,8 +1,6 @@
-import { Check } from "src/check";
+import { error, notNull, stringNotNullNotEmpty } from "src/check";
 import { GitCommit, GitObject, GitObjectDetails, GitObjectType } from "src/git/types";
 import { as } from "src/utils/utils";
-
-const check: Check = require.main.require("./check");
 
 export class GitObjectParserProcessor
 {
@@ -25,9 +23,9 @@ export class GitObjectParserProcessor
         // If we are a header line, clear previous object (object is now complete)
         this.complete();
 
-        const id = check.stringNonNullNotEmpty(matcher.groups['id'], 'id');
-        const type = check.nonNull(matcher.groups['type'] as GitObjectType, 'type');
-        const size = check.nonNullNotZero(parseInt(matcher.groups['size'], 10), 'size');
+        const id = stringNotNullNotEmpty(matcher.groups['id'], 'id');
+        const type = notNull(matcher.groups['type'] as GitObjectType, 'type');
+        const size = parseInt(matcher.groups['size'], 10);
     }
 
     complete() {
@@ -85,16 +83,16 @@ export class GitCommitParser implements GitObjectParser {
     build(): GitCommit {
 
         if (!this.treeId || !this.treeId.length) {
-            throw check.error(`treeId required for commit: ${this.id}`);
+            throw error(`treeId required for commit: ${this.id}`);
         }
         if (!this.author || !this.author.length) {
-            throw check.error(`author required for commit: ${this.id}`);
+            throw error(`author required for commit: ${this.id}`);
         }
         if (!this.committer || !this.committer.length) {
-            throw check.error(`committer required for commit: ${this.id}`);
+            throw error(`committer required for commit: ${this.id}`);
         }
         if (!this.message || !this.message.length) {
-            throw check.error(`message required for commit: ${this.id}`);
+            throw error(`message required for commit: ${this.id}`);
         }
 
         return as<GitCommit>({

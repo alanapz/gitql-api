@@ -1,4 +1,4 @@
-import { Check } from "src/check";
+import { error } from "src/check";
 import { GitObjectParserProcessor } from "src/git/git-object-parser";
 import {
     BranchRef,
@@ -16,8 +16,6 @@ import {
     TrackingBranchRef,
     WorkingDirectoryItem
 } from "src/git/types";
-
-const check: Check = require.main.require("./check");
 
 export class GitUtils {
 
@@ -43,12 +41,10 @@ export class GitUtils {
             return GitUtils.toStashRef(input);
         }
 
-        throw check.error(`Unable to parse explicit ref: '${input}'`);
+        throw error(`Unable to parse explicit ref: '${input}'`);
     }
 
     static toBranchRef(input: string): BranchRef {
-
-        check.stringNonNullNotEmpty(input, 'input');
 
         // If it's already a branch ref, great
         const refMatcher = input.match(/^refs\/heads\/(?<branch>.+)$/);
@@ -62,7 +58,7 @@ export class GitUtils {
 
         // Fail if it's a different reftype
         if (input.startsWith("refs/")) {
-            throw check.error(`Ref: '${input}' is not a branch ref`);
+            throw error(`Ref: '${input}' is not a branch ref`);
         }
 
         // Branch name, convert to ref
@@ -88,7 +84,7 @@ export class GitUtils {
 
         // Fail if it's a different reftype
         if (input.startsWith("refs/")) {
-            throw check.error(`Ref: '${input}' is not a tracking ref`);
+            throw error(`Ref: '${input}' is not a tracking ref`);
         }
 
         // Try to parse tracking branch remote from name
@@ -96,7 +92,7 @@ export class GitUtils {
         const trackingMatcher = input.match(/^(?<remote>.+?)\/(?<branch>.+)$/);
 
         if (!trackingMatcher) {
-            throw check.error(`Unparseable tracking branch ref: '${input}'`);
+            throw error(`Unparseable tracking branch ref: '${input}'`);
         }
 
         return {
@@ -108,8 +104,6 @@ export class GitUtils {
     }
 
     static toTagRef(input: string): TagRef {
-
-        check.stringNonNullNotEmpty(input, 'input');
 
         // If it's already a tag ref, great
         const refMatcher = input.match(/^refs\/tags\/(?<name>.+)$/);
@@ -123,7 +117,7 @@ export class GitUtils {
 
         // Fail if it's a different reftype
         if (input.startsWith("refs/")) {
-            throw check.error(`Ref: '${input}' is not a tag ref`);
+            throw error(`Ref: '${input}' is not a tag ref`);
         }
 
         // Branch name, convert to ref
@@ -147,11 +141,11 @@ export class GitUtils {
 
         // Fail if it's a different reftype
         if (input.startsWith("refs/")) {
-            throw check.error(`Ref: '${input}' is not a stash ref`);
+            throw error(`Ref: '${input}' is not a stash ref`);
         }
 
         if (!input.match(/^stash@{\d+}$/)) {
-            throw check.error(`Unparseable stash ref: '${input}'`);
+            throw error(`Unparseable stash ref: '${input}'`);
         }
 
         // Stash name, convert to ref
@@ -240,7 +234,7 @@ export class GitUtils {
         for (const line of input.trim().split("\n")) {
 
             if (!(matcher = line.match(/^\s*(?<target>[a-f0-9]+)\s+(?<name>refs\/.+)$/))) {
-                throw check.error(`Unparseable input line: '${line}'`);
+                throw error(`Unparseable input line: '${line}'`);
             }
 
             const targetId = matcher.groups["target"];
@@ -268,18 +262,17 @@ export class GitUtils {
             } else if ((matcher = refName.match(/^refs\/stash$/))) {
                 // Ignore fake "stash" refs
             } else {
-                throw check.error(`Unexpected type for input line: '${line}'`);
+                throw error(`Unexpected type for input line: '${line}'`);
             }
         }
     }
 
     static *parsePathDiffStatus(input: string): Generator<WorkingDirectoryItem> {
-        check.nonNull(input);
         for (const inputLine of input.trim().split("\n").map(val => val.trim())) {
             if (inputLine.length) {
                 const matcher = inputLine.trim().match(/^(?<status>[A-Z]*)\s+(?<name>.*)$/);
                 if (!matcher) {
-                    throw check.error(`Unparseable diff status: '${input}'`);
+                    throw error(`Unparseable diff status: '${input}'`);
                 }
                 const status = matcher.groups["status"];
                 // https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---diff-filterACDMRTUXB82308203
@@ -299,7 +292,6 @@ export class GitUtils {
     }
 
     static *parseListUntracked(input: string): Generator<WorkingDirectoryItem> {
-        check.nonNull(input);
         for (const inputLine of input.trim().split("\n").map(val => val.trim())) {
             if (inputLine.length) {
                 yield {
@@ -311,7 +303,6 @@ export class GitUtils {
     }
 
     static *parseStashList(input: string, splitBy: string): Generator<GitStashLine> {
-        check.nonNull(input);
         for (const inputLine of input.trim().split(`${splitBy}${splitBy}`).map(val => val.trim())) {
             if (inputLine.length) {
                 if (inputLine.length) {
@@ -337,7 +328,7 @@ export class GitUtils {
                     val.refName = matcher.groups["refName"];
                 }
                 else {
-                    throw check.error(`Unexpected component: '${inputComponent}' for line: '${inputLine}'`);
+                    throw error(`Unexpected component: '${inputComponent}' for line: '${inputLine}'`);
                 }
             }
         }
@@ -349,7 +340,6 @@ export class GitUtils {
     }
 
     static *parseGitLog(input: string, splitBy: string): Generator<GitLogLine> {
-        check.nonNull(input);
         for (const inputLine of input.trim().split(`${splitBy}${splitBy}`).map(val => val.trim())) {
             if (inputLine.length) {
                 yield GitUtils.parseGitLogLine(inputLine, splitBy);
@@ -419,7 +409,7 @@ export class GitUtils {
                         .filter(val => val.length);
                 }
                 else {
-                    throw check.error(`Unexpected component: '${inputComponent}' for line: '${inputLine}'`);
+                    throw error(`Unexpected component: '${inputComponent}' for line: '${inputLine}'`);
                 }
             }
         }
@@ -442,7 +432,7 @@ export class GitUtils {
             if (inputLine) {
                 const matcher = inputLine.trim().match(/^(?<commit>[a-f0-9]+)\s+(?<type>commit|tag)\s+(?<ref>.+)$/);
                 if (!matcher) {
-                    throw check.error(`Unparseable for-each-ref line: '${inputLine}' for commit: '${commitId}'`);
+                    throw error(`Unparseable for-each-ref line: '${inputLine}' for commit: '${commitId}'`);
                 }
                 yield GitUtils.parseExplicitRef(matcher.groups["ref"]);
             }

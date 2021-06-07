@@ -1,6 +1,4 @@
-import { Check } from "src/check";
-
-const check: Check = require.main.require("./check");
+import { notNull } from "src/check";
 
 export function cacheMap<K, V>(): CacheMap<K, V> {
     return new CacheMap<K, V>();
@@ -9,8 +7,8 @@ export function cacheMap<K, V>(): CacheMap<K, V> {
 export class CacheMap<K, V> extends Map<K, V> {
 
     fetch(key: K, resolver: (key: K) => V): V {
-        check.nonNull(key, "key");
-        check.nonNull(resolver, "resolver");
+        notNull(key, "key");
+        notNull(resolver, "resolver");
 
         if (this.has(key)) {
             return this.get(key);
@@ -22,8 +20,8 @@ export class CacheMap<K, V> extends Map<K, V> {
     }
 
     async fetchAsync(key: K, resolver: (key: K) => Promise<V>): Promise<V> {
-        check.nonNull(key, "key");
-        check.nonNull(resolver, "resolver");
+        notNull(key, "key");
+        notNull(resolver, "resolver");
 
         if (this.has(key)) {
             return Promise.resolve(this.get(key));

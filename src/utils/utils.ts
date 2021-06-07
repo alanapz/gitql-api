@@ -14,12 +14,6 @@ export function aggregate<T>(input: T[][]): T[] {
     return buffer;
 }
 
-export function first_common_element<T>(a: T[], b: T[]): T {
-    const setB = new Set<T>(b);
-    const common = [...new Set<T>(a)].filter(x => setB.has(x));
-    return (common && common.length ? common[0] : null);
-}
-
 export function xxx_todo_fixme(): Error {
     throw new Error("XXX_TODO_FIXME");
 }

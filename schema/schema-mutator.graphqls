@@ -1,0 +1,9 @@
+type Mutation {
+    repository(path: String!): GitRepositoryMutator
+}
+
+type GitRepositoryMutator {
+    path: String!
+    fetch: GitRepository!
+    cleanWorkingDirectory: GitRepository!
+}

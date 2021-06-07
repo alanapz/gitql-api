@@ -3,13 +3,13 @@ import { APP_INTERCEPTOR } from "@nestjs/core";
 import { GraphQLModule } from "@nestjs/graphql";
 import { GqlModuleOptions } from "@nestjs/graphql/dist/interfaces/gql-module-options.interface";
 import { GitContextInterceptor } from "src/query/ctx/GitContextInterceptor";
-import { QueryModule } from "src/query/query.module";
+import { ResolverModule } from "src/resolver/resolver.module";
 import { AppController } from './app.controller';
 
 const join = require('path').join;
 
 const graphQl: GqlModuleOptions = {
-  typePaths: [ join(process.cwd(), 'schema/schema.graphqls') ],
+  typePaths: [ join(process.cwd(), 'schema/schema.graphqls'), join(process.cwd(), 'schema/schema-mutator.graphqls') ],
   debug: true,
   playground: true,
   definitions: {
@@ -33,7 +33,7 @@ const graphQl: GqlModuleOptions = {
 };
 
 @Module({
-  imports: [GraphQLModule.forRoot(graphQl), QueryModule],
+  imports: [GraphQLModule.forRoot(graphQl), ResolverModule],
   controllers: [AppController],
   providers: [{
     provide: APP_INTERCEPTOR,
