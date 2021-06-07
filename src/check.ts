@@ -1,17 +1,6 @@
-import { as } from "src/utils/utils";
-
-export interface Check {
-    nonNull: <T>(value: T, message?: string) => T;
-    nonNullNotZero: (value: number, message: string) => number;
-    stringNonNullNotEmpty: (value: string, message?: string) => string;
-    arrayNonNullNotEmpty: <T> (value: T[], message: string) => T[];
-    isOneOf: <T>(value: T, values: T[], message?: string) => T;
-    error: (message: string) => Error;
-}
-
-function nonNull<T>(value: T, message?: string): T {
+export function notNull<T>(value: T, message?: string): T {
     if (value === null || value === undefined) {
-        throw error(`nonNull: '${message || 'value'}'`);
+        throw error(`value is null: '${message || 'value'}'`);
     }
     return value;
 }
@@ -23,9 +12,12 @@ function nonNullNotZero(value: number, message: string): number {
     return value;
 }
 
-function stringNonNullNotEmpty(value: string, message?: string): string {
-    if (!value || !value.trim().length) {
-        throw error(`stringNonNullNotEmpty: '${message || 'value'}'`)
+export function stringNotNullNotEmpty(value: string, message?: string): string {
+    if (value === null || value === undefined) {
+        throw error(`string is null: '${message || 'value'}'`);
+    }
+    if (!value.trim().length) {
+        throw error(`string is empty: '${message || 'value'}'`);
     }
     return value;
 }
@@ -48,10 +40,8 @@ function isOneOf<T>(value: T, values: T[], message: string): T {
     return value;
 }
 
-function error(message: string): Error {
-    const error = new Error(message);
+export function error(message: string): Error {
+    const error = new Error(stringNotNullNotEmpty(message, "errorMessage"));
     console.error(error, error.stack);
     return error;
 }
-
-module.exports = as<Check>({ nonNull, nonNullNotZero, stringNonNullNotEmpty, arrayNonNullNotEmpty, isOneOf, error });

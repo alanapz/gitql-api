@@ -1,11 +1,9 @@
 import { ChildProcess } from "child_process";
-import { Check } from "src/check";
+import { error, stringNotNullNotEmpty } from "src/check";
 import { GitCatFileParser } from "src/git/git-cat-file-parser";
 import { GitObjectDetails } from "src/git/types";
 
 const { spawn } = require("child_process");
-
-const check: Check = require.main.require("./check");
 
 interface Awaiter {
     found: (object: GitObjectDetails) => void;
@@ -23,11 +21,11 @@ export class GitCatFileProcess {
     private cmd: ChildProcess;
 
     constructor(private repoPath: string) {
-        check.stringNonNullNotEmpty(repoPath, "repoPath");
+        stringNotNullNotEmpty(repoPath, "repoPath");
     }
 
     lookup(objectId: string): Promise<GitObjectDetails> {
-        check.stringNonNullNotEmpty(objectId, "objectId");
+        stringNotNullNotEmpty(objectId, "objectId");
 
         console.debug(`cat-file lookup object: ${objectId}, pending: ${this.awaiters.size}`);
 
@@ -95,7 +93,7 @@ export class GitCatFileProcess {
         });
 
         cmd.stderr.on('data', (data) => {
-            throw check.error(`Unexpected response: ${data.toString()}`);
+            throw error(`Unexpected response: ${data.toString()}`);
         });
     }
 

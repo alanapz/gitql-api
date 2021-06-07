@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Check } from "src/check";
-import { lazyValue } from "src/utils/lazy-value";
-
-const check: Check = require.main.require("./check");
+import { stringNotNullNotEmpty } from "src/check";
 
 @Injectable()
 export class ConfigService {
@@ -10,7 +7,7 @@ export class ConfigService {
     private readonly _repoRoot: string;
 
     constructor() {
-        this._repoRoot = check.stringNonNullNotEmpty(process.env["GQL_ROOT"], "'GQL_ROOT' not defined");
+        this._repoRoot = stringNotNullNotEmpty(process.env["GQL_ROOT"], "'GQL_ROOT' not defined");
     }
 
     get repoRoot() {

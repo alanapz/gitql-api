@@ -1,9 +1,7 @@
-import { Check } from "src/check";
+import { error } from "src/check";
 import { GitRefspecConfig } from "src/git/git-config-file";
 import { BranchRef, TrackingBranchRef } from "src/git/types";
 import { GitUtils } from "src/git/utils";
-
-const check: Check = require.main.require("./check");
 
 // https://git-scm.com/book/en/v2/Git-Internals-The-Refspec
 export class GitRefspecConfigImpl implements GitRefspecConfig {
@@ -19,7 +17,7 @@ export class GitRefspecConfigImpl implements GitRefspecConfig {
 
         const matcher = value.match(/^\+?(?<remote>.*):(?<local>.*)$/);
         if (!matcher) {
-            throw check.error(`Unexpected refspec: ${value}`);
+            throw error(`Unexpected refspec: ${value}`);
         }
 
         this.remotePattern = matcher.groups["remote"];
