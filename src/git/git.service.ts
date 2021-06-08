@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { error, notNull, stringNotNullNotEmpty } from "src/check";
+import { stringNotNullNotEmpty } from "src/check";
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitConfigFileParser } from "src/git/git-config-file-parser";
 import {
@@ -31,24 +31,8 @@ export class GitService {
     }
 
     async listRefs(repoPath: string, callback: ParseRefListCallback): Promise<void> {
-        stringNotNullNotEmpty(repoPath, "repoPath");
-        notNull(callback, "callback");
-        //
         const result = await this.gitExecute(['-C', repoPath, 'show-ref']);
         GitUtils.parseRefListResponse(result, callback);
-    }
-
-    async getRefTarget(repoPath: string, ref: Ref): Promise<string> {
-        stringNotNullNotEmpty(repoPath, "repoPath");
-        notNull(ref, "ref");
-        //
-        const refFilename = path.join(repoPath, ".git", ref.refName);
-        const fstat = await ioUtils.fstatOrNull(refFilename);
-        if (!fstat || !fstat.isFile()) {
-            throw error(`Couldn't resolve branch head, file not found: ${refFilename}`);
-        }
-        const fileData = (await fs.readFile(refFilename, { encoding: "UTF8", flags: "r"}));
-        return fileData.trim();
     }
 
     async listObjects(repoPath: string): Promise<Generator<GitObject>> {
@@ -119,22 +103,15 @@ export class GitService {
         return parser;
     }
 
-    async calculateDistance(repoPath: string, source: Ref, target: Ref, lookupFirstParent: (commitId: string) => Promise<string>): Promise<{ mergeBase: string, ahead: number, behind: number }> {
-
-        const [sourceHead, targetHead] = await Promise.all([
-            this.getRefTarget(repoPath, source),
-            this.getRefTarget(repoPath, target)]);
+    async calculateDistance(repoPath: string, sourceCommitId: string, targetCommitId: string, lookupFirstParent: (commitId: string) => Promise<string>): Promise<{ mergeBase: string, ahead: number, behind: number }> {
 
         const sourceCommits: string[] = [];
         const targetCommits: string[] = [];
 
-        let sourceCurrentId = sourceHead;
-        let targetCurrentId = targetHead;
-
         while (true) {
 
-            sourceCommits.push(sourceCurrentId);
-            targetCommits.push(targetCurrentId);
+            sourceCommits.push(sourceCommitId);
+            targetCommits.push(targetCommitId);
 
             const mergeBaseId = this.firstCommonElement(sourceCommits, targetCommits);
             if (mergeBaseId) {
@@ -145,8 +122,9 @@ export class GitService {
                 };
             }
 
-            sourceCurrentId = await lookupFirstParent(sourceCurrentId);
-            targetCurrentId = await lookupFirstParent(targetCurrentId);
+            [sourceCommitId, targetCommitId] = await Promise.all([
+                await lookupFirstParent(sourceCommitId),
+                await lookupFirstParent(targetCommitId)]);
         }
     }
 

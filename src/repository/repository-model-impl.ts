@@ -41,12 +41,13 @@ import { as, if_not_found, IfNotFound, map_reducer, map_values } from "src/utils
 
 export class RepositoryModelImpl implements RepositoryModel {
 
-    private readonly _allCommits = lazyValue<Map<string, CommitModel>>();
     private readonly _allBranches = lazyValue<Map<string, BranchRefModel>>();
     private readonly _allTrackingBranches = lazyValue<Map<string, TrackingBranchRefModel>>();
     private readonly _allTags = lazyValue<Map<string, TagRefModel>>();
     private readonly _allStashes = lazyValue<Map<string, StashRefModel>>();
     private readonly _allRefs = lazyValue<Map<string, RefModel>>();
+
+    private readonly _allReachableCommits = lazyValue<Map<string, CommitModel>>();
 
     private readonly _repoHead = lazyValue<RefModel>();
     private readonly _gitConfig = lazyValue<GitConfigFile>();
@@ -89,7 +90,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             .reduce(map_reducer(stash => stash.ref.refName), new Map<string, StashRefModel>()));
     }
 
-    private get allRefs(): Promise<Map<string, RefModel>> {
+    get allRefs(): Promise<Map<string, RefModel>> {
         const repository = this;
         return this._allRefs.fetch(async () => {
 
@@ -115,21 +116,25 @@ export class RepositoryModelImpl implements RepositoryModel {
         });
     }
 
+    get allReachableCommits() {
+        return this._allReachableCommits.fetch(async () => Array.from(await this.gitService.listAllCommits(this.path))
+            .map(result => as<CommitModel>(new CommitModelImpl(this, result)))
+            .reduce(map_reducer(commit => commit.id), new Map<string, CommitModel>()));
+    }
+
     async lookupCommit(commitId: string, ifNotFound: IfNotFound): Promise<CommitModel> {
         stringNotNullNotEmpty(commitId, "commitId");
 
         const result = this._cachedCommits.fetch(commitId, async () => {
 
-            const allCommits = await this._allCommits.fetch(async () => Array.from(await this.gitService.listAllCommits(this.path))
-                .map(result => new CommitModelImpl(this, result))
-                .reduce(map_reducer(commit => commit.id), new Map<string, CommitModel>()));
+            const reachableCommits = await this.allReachableCommits;
 
-            if (allCommits.has(commitId)) {
-                return allCommits.get(commitId);
+            if (reachableCommits.has(commitId)) {
+                return reachableCommits.get(commitId);
             }
 
             const unreachableCommits = Array.from(await this.gitService.lookupCommit(this.path, [commitId]))
-                .map(result => new CommitModelImpl(this, result))
+                .map(result => as<CommitModel>(new CommitModelImpl(this, result)))
                 .reduce(map_reducer(commit => commit.id), new Map<string, CommitModel>());
 
             if (unreachableCommits.has(commitId)) {

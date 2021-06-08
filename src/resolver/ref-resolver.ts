@@ -28,19 +28,7 @@ export abstract class RefResolver {
 
     @ResolveField("ancestors")
     async getAncestors(@Parent() model: RefModel,  @Args('count') count: number): Promise<CommitModel[]> {
-        const results: CommitModel[] = [];
-
-        let current = await model.commit;
-
-        for (let i=0; i<count; i++) {
-            if (!current) {
-                break;
-            }
-            results.push(current);
-            current = await current.firstParent;
-        }
-
-        return results;
+        return (await (await model.commit).ancestors).slice(0, count);
     }
 
     @ResolveField("distance")
@@ -53,10 +41,14 @@ export abstract class RefResolver {
 
         return repository.buildRefDistance(source, target, async () => {
 
+            const [sourceCommitId, targetCommitId] = await Promise.all([
+                (await (await repository.lookupRef(source, 'throw')).commit).id,
+                (await (await repository.lookupRef(target, 'throw')).commit).id]);
+
             const distance = await repository.gitService.calculateDistance(
                 repository.path,
-                source,
-                target,
+                sourceCommitId,
+                targetCommitId,
                 async commitId => (await (await repository.lookupCommit(commitId, 'throw')).firstParent).id);
 
             if (!distance) {

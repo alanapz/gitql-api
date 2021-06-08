@@ -36,6 +36,19 @@ export class RepositoryResolver {
         return model.lookupCommit(commitId, 'null');
     }
 
+    @ResolveField("recentCommits")
+    async listRecentCommits(@Parent() model: RepositoryModel, @Args('count') count: number): Promise<CommitModel[]> {
+        // Slightly tricky, we need to sort by timestamp but there's no "async sort" function
+        const results: {commit: CommitModel, timestamp: number}[] = [... await Promise.all((await map_values(model.allReachableCommits)).map(async commit => {
+            const timestamp = (await commit.committer).timestamp;
+            return { commit, timestamp };
+        }))];
+        return results
+            .sort((left, right) => right.timestamp - left.timestamp)
+            .map(result => result.commit)
+            .slice(0, count);
+    }
+
     @ResolveField("blob")
     getBlobById(@Parent() model: RepositoryModel, @Args('id') blobId: string): Promise<BlobModel> {
         stringNotNullNotEmpty(blobId, 'blobId');
