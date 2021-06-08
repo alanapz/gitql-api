@@ -1,7 +1,8 @@
 import { error } from "src/check";
-import { GitLogLine, GitPrincipal, Ref } from "src/git/types";
+import { GitLogLine, GitPrincipal } from "src/git/types";
 import { CommitModel, RefModel, RepositoryModel, TreeModel } from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
+import { map_values } from "src/utils/utils";
 
 export class CommitModelImpl implements CommitModel {
 
@@ -27,9 +28,11 @@ export class CommitModelImpl implements CommitModel {
 
     private readonly _allDetails = lazyValue<GitLogLine>();
 
-    private readonly _reachableByRefs = lazyValue<Ref[]>();
-
     private readonly _reachableBy = lazyValue<RefModel[]>();
+
+    private readonly _ancestors = lazyValue<CommitModel[]>();
+
+    private readonly _allAncestors = lazyValue<CommitModel[]>();
 
     constructor(readonly repository: RepositoryModel, private readonly _input: GitLogLine) {
         this._parentIds.setIfNotNull(_input.parentIds);
@@ -90,20 +93,51 @@ export class CommitModelImpl implements CommitModel {
     }
 
     private get allDetails() {
-        return this._allDetails.fetch(async () => {
-            for (const result of await this.repository.gitService.lookupCommit(this.repository.path, [this.id])) {
-                if (result.id === this.id) {
-                    return result;
-                }
-            }
-            throw error(`Unable to retrieve details for commit: '${this.id}'`);
-        })
+        return this._allDetails.fetch( () => { throw error(`Unable to fetch missing details for commit: '${this.id}', lazy-loading not supported`); });
     }
 
     get reachableBy() {
         return this._reachableBy.fetch(async () => {
-            const refs = await this._reachableByRefs.fetch(async () => Array.from(await this.repository.gitService.listCommitReachableBy(this.repository.path, this.id)));
-            return Promise.all(refs.map(ref => this.repository.lookupRef(ref, 'throw')));
+
+            // We map result into temporary object as filter(async) doesn't do what we imagine it to do !
+            const results = await Promise.all((await map_values(this.repository.allRefs)).map(async ref => {
+                const contains = ((await (await ref.commit).ancestors).includes(this));
+                return { ref, contains };
+            }));
+
+            return results.filter(result => result.contains).map(result => result.ref);
         });
+    }
+
+    get ancestors() {
+        return this._ancestors.fetch(async () => {
+            const results: CommitModel[] = [];
+
+            let current: CommitModel = this;
+
+            while (current) {
+                results.push(current);
+                current = await current.firstParent;
+            }
+
+            return results;
+        });
+    }
+
+    get allAncestors() {
+        return this._allAncestors.fetch(async () => {
+            const results: CommitModel[] = [];
+            await this.recurseAllAncestors(this, new Set<string>(), results);
+            return results;
+        });
+    }
+
+    private async recurseAllAncestors(current: CommitModel, seenCommitIds: Set<string>, results: CommitModel[]): Promise<void> {
+        if (!current || seenCommitIds.has(current.id)) {
+            return;
+        }
+        seenCommitIds.add(current.id);
+        results.push(current);
+        await Promise.all((await current.parents).map(parent => this.recurseAllAncestors(parent, seenCommitIds, results)));
     }
 }

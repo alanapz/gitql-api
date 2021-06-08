@@ -47,19 +47,8 @@ export class CommitResolver {
     }
 
     @ResolveField("ancestors")
-    async getAncestors(@Parent() model: CommitModel): Promise<CommitModel[]> {
-        const ancestors: CommitModel[] = [];
-        const commitCache = new Map<string, CommitModel>();
-        await this.recurseCommitAncestors(model, ancestors, commitCache);
-        return ancestors;
-    }
-
-    private async recurseCommitAncestors(commit: CommitModel, ancestors: CommitModel[], commitCache: Map<string, CommitModel>): Promise<void> {
-        if (!commitCache.has(commit.id)) {
-            ancestors.push(commit);
-            commitCache.set(commit.id, commit);
-            (await commit.parents).forEach(parent => this.recurseCommitAncestors(parent, ancestors, commitCache));
-        }
+    getAncestors(@Parent() model: CommitModel): Promise<CommitModel[]> {
+        return model.ancestors;
     }
 
     @ResolveField("refNotes")

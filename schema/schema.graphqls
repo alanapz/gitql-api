@@ -63,7 +63,8 @@ type GitCommit implements GitObject {
     committer: GitPrincipal !
     subject: String!
     message: String!
-    ancestors:  [GitCommit!]!
+    """List all first-parent ancestors of this commit"""
+    ancestors(count: Int!):  [GitCommit!]!
     refNotes: [String!]!
     reachableBy: [GitRef!]!
 }
@@ -85,6 +86,7 @@ interface GitRef {
     displayName: String!
     repository: GitRepository!
     commit: GitCommit
+    """List all first-parent ancestors of the head of this ref"""
     ancestors(count: Int!):  [GitCommit!]!
     distance(refName: String): GitRefDistance
 }
@@ -104,6 +106,7 @@ type GitRemote {
 type GitRepository {
     path: String!
     commit(id: String!): GitCommit
+    recentCommits(count: Int!):  [GitCommit!]!
     blob(id: String!): GitBlob
     tree(id: String!): GitTree
     ref(name: String!): GitRef

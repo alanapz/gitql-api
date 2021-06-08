@@ -29,6 +29,8 @@ export interface CommitModel {
     message: Promise<string>;
     refNotes: Promise<string[]>;
     reachableBy: Promise<RefModel[]>;
+    ancestors: Promise<CommitModel[]>;
+    allAncestors: Promise<CommitModel[]>;
 }
 
 export interface TreeModel {
@@ -111,10 +113,12 @@ export interface TreeDescendantModel {
 
 export interface RepositoryModel {
     path: string
+    allRefs: Promise<Map<string, RefModel>>;
     allBranches: Promise<Map<string, BranchRefModel>>;
     allTrackingBranches: Promise<Map<string, TrackingBranchRefModel>>;
     allTags: Promise<Map<string, TagRefModel>>;
     allStashes: Promise<Map<string, StashRefModel>>;
+    allReachableCommits: Promise<Map<string, CommitModel>>;
     lookupCommit: (commitId: string, ifNotFound: IfNotFound) => Promise<CommitModel>;
     lookupBlob: (blobId: string, ifNotFound: IfNotFound) => Promise<BlobModel>;
     lookupTree: (treeId: string, ifNotFound: IfNotFound) => Promise<TreeModel>;
