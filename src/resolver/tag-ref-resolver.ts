@@ -11,13 +11,13 @@ export class TagRefResolver extends RefResolver {
         return Promise.resolve(model.ref.name);
     }
 
-    @ResolveField("tagMessage")
-    getTagMessage(@Parent() model: TagRefModel): Promise<string> {
-        return model.tagMessage;
+    @ResolveField("message")
+    getMessage(@Parent() model: TagRefModel): Promise<string> {
+        return model.message;
     }
 
-    @ResolveField("tagAuthor")
-    getTagAuthor(@Parent() model: TagRefModel): Promise<GitPrincipal> {
-        return model.tagAuthor;
+    @ResolveField("author")
+    getAuthor(@Parent() model: TagRefModel): Promise<GitPrincipal> {
+        return model.author;
     }
 }

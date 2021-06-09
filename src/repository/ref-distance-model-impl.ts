@@ -1,7 +1,10 @@
 import { Ref } from "src/git";
-import { RefDistanceModel, RepositoryModel } from "src/repository";
+import { CommitModel, RefDistanceModel, RepositoryModel } from "src/repository";
+import { lazyValue } from "src/utils/lazy-value";
 
-export class RefDistanceModelImpl implements RefDistanceModel{
+export class RefDistanceModelImpl implements RefDistanceModel {
+
+    private readonly _mergeBase = lazyValue<CommitModel>();
 
     constructor(
         private readonly _repository: RepositoryModel,
@@ -9,7 +12,7 @@ export class RefDistanceModelImpl implements RefDistanceModel{
         private readonly _targetRef: Ref,
         private readonly _ahead: number,
         private readonly _behind: number,
-        private readonly _mergeBaseCommitId: string) {
+        private readonly _mergeBaseId: string) {
     }
 
     get ahead() {
@@ -20,7 +23,11 @@ export class RefDistanceModelImpl implements RefDistanceModel{
         return Promise.resolve(this._behind);
     }
 
+    get mergeBaseId() {
+        return Promise.resolve(this._mergeBaseId);
+    }
+
     get mergeBase() {
-        return this._repository.lookupCommit(this._mergeBaseCommitId, 'throw');
+        return this._mergeBase.fetch(() => this._repository.lookupCommit(this._mergeBaseId, 'throw'));
     }
 }

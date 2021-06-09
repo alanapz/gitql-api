@@ -28,7 +28,11 @@ export abstract class RefResolver {
 
     @ResolveField("ancestors")
     async getAncestors(@Parent() model: RefModel,  @Args('count') count: number): Promise<CommitModel[]> {
-        return (await (await model.commit).ancestors).slice(0, count);
+        const commit = await model.commit;
+        if (!commit) {
+            return [];
+        }
+        return (await commit.ancestors).slice(0, count);
     }
 
     @ResolveField("distance")
@@ -42,23 +46,32 @@ export abstract class RefResolver {
         return repository.buildRefDistance(source, target, async () => {
 
             const [sourceCommitId, targetCommitId] = await Promise.all([
-                (await (await repository.lookupRef(source, 'throw')).commit).id,
-                (await (await repository.lookupRef(target, 'throw')).commit).id]);
+                (await repository.lookupRef(source, 'throw')).commitId,
+                (await repository.lookupRef(target, 'throw')).commitId
+            ]);
 
-            const distance = await repository.gitService.calculateDistance(
-                repository.path,
-                sourceCommitId,
-                targetCommitId,
-                async commitId => (await (await repository.lookupCommit(commitId, 'throw')).firstParent).id);
-
-            if (!distance) {
+            if (!sourceCommitId || !targetCommitId) {
                 return null;
             }
 
-            return {
-                ahead: distance.ahead,
-                behind: distance.behind,
-                mergeBase: distance.mergeBase};
+            return repository.persistentCacheService.lookupRefDistance(sourceCommitId, targetCommitId, async () => {
+
+                const lookupFirstParent = async (commitId: string) => {
+                    const firstParent = (await (await repository.lookupCommit(commitId, 'throw')).firstParent);
+                    return (firstParent && firstParent.id);
+                };
+
+                const distance = await repository.gitService.calculateDistance(repository.path, sourceCommitId, targetCommitId, lookupFirstParent);
+
+                if (!distance) {
+                    return null;
+                }
+
+                return {
+                    ahead: distance.ahead,
+                    behind: distance.behind,
+                    mergeBaseId: distance.mergeBase};
+            });
         });
     }
 }

@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { PersistentCacheModule } from "src/cache/persistent-cache.module";
 import { ConfigModule } from "src/config/config.module";
 import { GitModule } from "src/git/git.module";
 import { RepositoryModule } from "src/repository/repository.module";
@@ -22,7 +23,7 @@ import { WorkingDirectoryItemResolver } from "src/resolver/working-directory-ite
 import { WorkingDirectoryResolver } from "src/resolver/working-directory-resolver";
 
 @Module({
-  imports: [GitModule, ConfigModule, RepositoryModule],
+  imports: [ConfigModule, GitModule, PersistentCacheModule, RepositoryModule],
   providers: [
       QueryResolver,
       MutationResolver,
