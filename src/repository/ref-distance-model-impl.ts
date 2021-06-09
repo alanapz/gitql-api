@@ -3,8 +3,11 @@ import { CommitModel, RefDistanceModel, RepositoryModel } from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
 
 export class RefDistanceModelImpl implements RefDistanceModel {
+<<<<<<< HEAD
 
     private readonly _mergeBase = lazyValue<CommitModel>();
+=======
+>>>>>>> WIP
 
     constructor(
         private readonly _repository: RepositoryModel,

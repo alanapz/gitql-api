@@ -45,12 +45,34 @@ export abstract class RefResolver {
 
         return repository.buildRefDistance(source, target, async () => {
 
+<<<<<<< HEAD
             const [sourceCommitId, targetCommitId] = await Promise.all([
                 (await repository.lookupRef(source, 'throw')).commitId,
                 (await repository.lookupRef(target, 'throw')).commitId
             ]);
 
             if (!sourceCommitId || !targetCommitId) {
+=======
+            const [sourceCommit, targetCommit] = await Promise.all([
+                (await repository.lookupRef(source, 'throw')).commit,
+                (await repository.lookupRef(target, 'throw')).commit
+            ]);
+
+            if (!sourceCommit || !targetCommit) {
+                return null;
+            }
+
+            const [sourceCommitId, targetCommitId] = [sourceCommit.id, targetCommit.id];
+
+            const lookupFirstParent = async (commitId: string) => {
+                const firstParent = (await (await repository.lookupCommit(commitId, 'throw')).firstParent);
+                return (firstParent && firstParent.id);
+            };
+
+            const distance = await repository.gitService.calculateDistance(repository.path, sourceCommitId, targetCommitId, lookupFirstParent);
+
+            if (!distance) {
+>>>>>>> WIP
                 return null;
             }
 

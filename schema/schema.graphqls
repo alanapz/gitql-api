@@ -110,8 +110,12 @@ type GitRepository {
     trackingBranch(name: String!): GitTrackingBranch
     stashes: [GitStash!]!
     stash(name: String!): GitStash
+<<<<<<< HEAD
     remotes: [GitRemote!]!
     remote(name: String!): GitRemote
+=======
+    #remotes: [GitRef!]!
+>>>>>>> WIP
     lastFetchDate: Int
     head: GitRef
     workingDirectory: GitWorkingDirectory
