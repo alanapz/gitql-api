@@ -1,5 +1,5 @@
 import { Parent, ResolveField, Resolver } from "@nestjs/graphql";
-import { GitPrincipal } from "src/git/types";
+import { GitPrincipal } from "src/git";
 
 @Resolver("GitPrincipal")
 export class PrincipalResolver {

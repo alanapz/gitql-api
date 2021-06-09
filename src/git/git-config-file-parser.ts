@@ -1,7 +1,7 @@
 import { error } from "src/check";
 import { GitConfigFile, GitRefspecConfig, GitRemoteConfig } from "src/git/git-config-file";
 import { GitRefspecConfigImpl } from "src/git/git-refspec-config";
-import { BranchRef, TrackingBranchRef } from "src/git/types";
+import { BranchRef, TrackingBranchRef } from "src/git";
 import { GitUtils } from "src/git/utils";
 import { cacheMap } from "src/utils/cachemap";
 import { as } from "src/utils/utils";

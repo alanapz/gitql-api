@@ -1,5 +1,5 @@
 import { Parent, ResolveField, Resolver } from "@nestjs/graphql";
-import { GitPrincipal } from "src/git/types";
+import { GitPrincipal } from "src/git";
 import { CommitModel, RefModel, RepositoryModel, TreeModel } from "src/repository";
 
 @Resolver("GitCommit")

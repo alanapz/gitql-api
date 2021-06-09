@@ -1,19 +1,22 @@
 import { error, notNull, stringNotNullNotEmpty } from "src/check";
-import { GitConfigFile } from "src/git/git-config-file";
-import { GitService } from "src/git/git.service";
 import {
     BranchRef,
+    GitPrincipal,
     isBranchRef,
     isStashRef,
     isTagRef,
     isTrackingBranchRef,
-    ParseRefListCallback,
+    ParseListRefsCallback,
+    ParseListTagsCallback,
     Ref,
     StashRef,
     TagRef,
     TrackingBranchRef
-} from "src/git/types";
+} from "src/git";
+import { GitConfigFile } from "src/git/git-config-file";
+import { GitService } from "src/git/git.service";
 import {
+    AnnotatedTagModel,
     BlobModel,
     BranchRefModel,
     CommitModel,
@@ -26,12 +29,14 @@ import {
     TreeModel,
     WorkingDirectoryModel
 } from "src/repository";
+import { AnnotatedTagModelImpl } from "src/repository/annotated-tag-model-impl";
+import { AnnotatedTagRefModelImpl } from "src/repository/annotated-tag-ref-model-impl";
 import { BlobModelImpl } from "src/repository/blob-model-impl";
 import { BranchRefModelImpl } from "src/repository/branch-ref-model-impl";
 import { CommitModelImpl } from "src/repository/commit-model-impl";
+import { LightweightTagRefModelImpl } from "src/repository/lightweight-tag-ref-model-impl";
 import { RefDistanceModelImpl } from "src/repository/ref-distance-model-impl";
 import { StashRefModelImpl } from "src/repository/stash-ref-model-impl";
-import { TagRefModelImpl } from "src/repository/tag-ref-model-impl";
 import { TrackingBranchRefModelImpl } from "src/repository/tracking-branch-ref-model-impl";
 import { TreeModelImpl } from "src/repository/tree-model-impl";
 import { WorkingDirectoryModelImpl } from "src/repository/working-directory-model-impl";
@@ -48,11 +53,11 @@ export class RepositoryModelImpl implements RepositoryModel {
     private readonly _allRefs = lazyValue<Map<string, RefModel>>();
 
     private readonly _allReachableCommits = lazyValue<Map<string, CommitModel>>();
+    private readonly _allAnnotatedTags = lazyValue<Map<string, AnnotatedTagModel>>();
 
     private readonly _repoHead = lazyValue<RefModel>();
     private readonly _gitConfig = lazyValue<GitConfigFile>();
 
-    private readonly _cachedCommits = asyncMap<string, CommitModel>();
     private readonly _cachedBlobs = asyncMap<string, BlobModel>();
     private readonly _cachedTrees = asyncMap<string, TreeModel>();
     private readonly _cachedRefDistances = asyncMap<string, RefDistanceModel>();
@@ -91,26 +96,31 @@ export class RepositoryModelImpl implements RepositoryModel {
     }
 
     get allRefs(): Promise<Map<string, RefModel>> {
-        const repository = this;
         return this._allRefs.fetch(async () => {
 
             const results = new Map<string, RefModel>();
+            const repository = this;
 
-            await this.gitService.listRefs(this.path, as<ParseRefListCallback>({
+            const callback: ParseListRefsCallback = {
 
                 branch(ref: BranchRef, commitId: string) {
                     results.set(ref.refName, new BranchRefModelImpl(repository, ref, commitId));
                 },
 
-                trackingBranch(ref: TrackingBranchRef, commitId: string): void {
+                trackingBranch(ref: TrackingBranchRef, commitId: string) {
                     results.set(ref.refName, new TrackingBranchRefModelImpl(repository, ref, commitId));
                 },
 
-                tag(ref: TagRef, commitId: string): void {
-                    // XXXX: TODO: FIXME - tag doesn't always point to a commit
-                    results.set(ref.refName, new TagRefModelImpl(repository, ref, commitId));
+                lightweightTag(ref: TagRef, commitId: string) {
+                    results.set(ref.refName, new LightweightTagRefModelImpl(repository, ref, commitId));
+                },
+
+                annotatedTag(ref: TagRef, annotatedTagId: string) {
+                    results.set(ref.refName, new AnnotatedTagRefModelImpl(repository, ref, annotatedTagId));
                 }
-            }));
+            };
+
+            await this.gitService.listRefs(this.path, callback);
 
             return results;
         });
@@ -122,32 +132,39 @@ export class RepositoryModelImpl implements RepositoryModel {
             .reduce(map_reducer(commit => commit.id), new Map<string, CommitModel>()));
     }
 
+    get allAnnotatedTags() {
+        return this._allAnnotatedTags.fetch(async () => {
+
+            const results = new Map<string, AnnotatedTagModel>();
+            const repository = this;
+
+            const callback: ParseListTagsCallback = {
+
+                tagToCommit(annotatedTagId: string, commitId: string, tagMessage: string, tagAuthor: GitPrincipal) {
+                    results.set(annotatedTagId, new AnnotatedTagModelImpl(repository, annotatedTagId, commitId, tagMessage, tagAuthor));
+                }
+            };
+
+            await this.gitService.listAnnotatedTags(this.path, callback);
+
+            return results;
+        });
+    }
+
     async lookupCommit(commitId: string, ifNotFound: IfNotFound): Promise<CommitModel> {
         stringNotNullNotEmpty(commitId, "commitId");
-
-        const result = this._cachedCommits.fetch(commitId, async () => {
-
-            const reachableCommits = await this.allReachableCommits;
-
-            if (reachableCommits.has(commitId)) {
-                return reachableCommits.get(commitId);
-            }
-
-            const unreachableCommits = Array.from(await this.gitService.lookupCommit(this.path, [commitId]))
-                .map(result => as<CommitModel>(new CommitModelImpl(this, result)))
-                .reduce(map_reducer(commit => commit.id), new Map<string, CommitModel>());
-
-            if (unreachableCommits.has(commitId)) {
-                return unreachableCommits.get(commitId);
-            }
-
-            return null;
-        });
-
         return if_not_found({
             value: ifNotFound,
-            result,
-            error: () => error(`Commit not found: '${commitId}'`)});
+            result: (await this.allReachableCommits).get(commitId),
+            error: () => error(`Commit not found (or is unreachable): '${commitId}' for repo: '${this.path}'`)});
+    }
+
+    async lookupAnnotatedTag(annotatedTagId: string, ifNotFound: IfNotFound): Promise<AnnotatedTagModel> {
+        stringNotNullNotEmpty(annotatedTagId, "annotatedTagId");
+        return if_not_found({
+            value: ifNotFound,
+            result: (await this.allAnnotatedTags).get(annotatedTagId),
+            error: () => error(`Annotated tag not found: '${annotatedTagId}' for repo: '${this.path}'`)});
     }
 
     async lookupBlob(blobId: string, ifNotFound: IfNotFound) {
@@ -155,7 +172,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         return if_not_found({
             value: ifNotFound,
             result: (await this._cachedBlobs.fetch(blobId, async () => new BlobModelImpl(this, blobId))),
-            error: () => error(`Blob not found: '${blobId}'`)});
+            error: () => error(`Blob not found: '${blobId}' for repo: '${this.path}'`)});
     }
 
     async lookupTree(treeId: string, ifNotFound: IfNotFound) {
@@ -163,7 +180,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         return if_not_found({
             value: ifNotFound,
             result: (await this._cachedTrees.fetch(treeId, async () => new TreeModelImpl(this, treeId))),
-            error: () => error(`Tree not found: '${treeId}'`)});
+            error: () => error(`Tree not found: '${treeId}' for repo: '${this.path}'`)});
     }
 
     async lookupRef(ref: Ref, ifNotFound: IfNotFound) {

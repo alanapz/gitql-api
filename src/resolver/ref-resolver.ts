@@ -1,6 +1,6 @@
 import { Args, Parent, ResolveField } from "@nestjs/graphql";
 import { stringNotNullNotEmpty } from "src/check";
-import { Ref } from "src/git/types";
+import { Ref } from "src/git";
 import { GitUtils } from "src/git/utils";
 import { CommitModel, RefDistanceModel, RefModel, RepositoryModel } from "src/repository";
 

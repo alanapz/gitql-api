@@ -29,6 +29,16 @@ export function map_reducer<K, V>(idMapper: (value: V) => K): (previousValue: Ma
     }
 }
 
+export function record_to_map<K extends string, V>(obj: Record<K, V>): Map<K, V> {
+    const map = new Map<K, V>();
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            map.set(key, obj[key]);
+        }
+    }
+    return map;
+}
+
 export type IfNotFound = 'throw' | 'null';
 
 export function if_not_found<T>(params: {value: IfNotFound, result: T, error: () => Error}): T|never {

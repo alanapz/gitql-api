@@ -1,11 +1,5 @@
 scalar GitTimestamp
 
-enum GitTagKind {
-    LIGHTWEIGHT
-    ANNOTATED
-    SIGNED
-}
-
 enum GitWorkingDirectoryItemStatus {
     ADDED
     COPIED
@@ -134,18 +128,17 @@ type GitStash implements GitRef {
 }
 
 type GitTag implements GitRef {
-    #tagName: String!
-    #tagKind: GitTagKind!
-    #target: GitObject!
-    #"""Only valid for tag type ANNOTATED"""
-    #message: String
-    #"""Only valid for tag type ANNOTATED"""
-    #tagger: GitCommitAuthor
-    # Inherited from GitRef
+    tagName: String!
+    """Returns tag message annotated tags, commit subject for lightweight tags"""
+    tagMessage: String!
+    """Returns tag author for annotated tags, commit author for lightweight tags"""
+    tagAuthor: GitPrincipal!
+    """eg: refs/tags/v1 (inherited from GitRef)"""
     refName: String!
+    """Same as tagName (inherited from GitRef)"""
     displayName: String!
     repository: GitRepository!
-    commit: GitCommit
+    commit: GitCommit!
     ancestors(count: Int!):  [GitCommit!]!
     distance(refName: String): GitRefDistance
 }
@@ -189,7 +182,6 @@ type GitTreeBlobItem implements GitTreeItem {
     tree: GitTree!
     name: String!
     mode: Int!
-    testErrorXXX: String!
 }
 
 type GitTreeSubtreeItem implements GitTreeItem {
