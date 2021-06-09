@@ -24,6 +24,10 @@ export class BranchRefModelImpl implements BranchRefModel {
         return this.ref.name;
     }
 
+    get commitId() {
+        return Promise.resolve(this._commitId);
+    }
+
     get commit() {
         return this._commit.fetch(() => this.repository.lookupCommit(this._commitId, 'throw'));
     }

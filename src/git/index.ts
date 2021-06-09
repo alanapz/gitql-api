@@ -31,6 +31,12 @@ export interface GitPrincipal {
     timestamp: number;
 }
 
+export interface RefDistance {
+    ahead: number;
+    behind: number;
+    mergeBaseId: string;
+}
+
 export interface ParseListRefsCallback {
     branch: (ref: BranchRef, commitId: string) => void;
     trackingBranch: (ref: TrackingBranchRef, commitId: string) => void;
@@ -39,7 +45,11 @@ export interface ParseListRefsCallback {
 }
 
 export interface ParseListTagsCallback {
-    tagToCommit: (annotatedTagId: string, commitId: string, tagMessage: string, tagAuthor: GitPrincipal) => void;
+    tagToCommit: (annotatedTagId: string, commitId: string, message: string, author: GitPrincipal) => void;
+}
+
+export interface ParseListStashesCallback {
+    stash: (ref: StashRef, message: string, timestamp: number) => void;
 }
 
 export function isBranchRef(obj: Ref): obj is BranchRef {

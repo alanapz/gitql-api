@@ -6,12 +6,13 @@ import {
     isTagRef,
     isTrackingBranchRef,
     ParseListRefsCallback,
+    ParseListStashesCallback,
     ParseListTagsCallback,
     Ref
 } from "src/git";
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitConfigFileParser } from "src/git/git-config-file-parser";
-import { GitLogField, GitLogLine, GitObject, GitStashLine, GitTreeItem, WorkingDirectoryItem } from "src/git/types";
+import { GitLogField, GitLogLine, GitObject, GitTreeItem, WorkingDirectoryItem } from "src/git/types";
 import { GitUtils } from "src/git/utils";
 import { ioUtils } from "src/utils/io-utils";
 import { record_to_map } from "src/utils/utils";
@@ -32,6 +33,7 @@ export class GitService {
     }
 
     async listRefs(repoPath: string, callback: ParseListRefsCallback): Promise<void> {
+
         // See: https://git-scm.com/docs/git-for-each-ref#Documentation/git-for-each-ref.txt---formatltformatgt
         const fields = Array.from(record_to_map({
             ref: 'refname',
@@ -39,7 +41,7 @@ export class GitService {
             type: 'objecttype',
             rtype: '*objecttype' }));
 
-        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}`]);
+        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}${seperator}`]);
 
         for (const {val, inputLine} of GitUtils.parseSerializedResponse<{ref, id, type, rtype}>(result, seperator)) {
 
@@ -85,6 +87,7 @@ export class GitService {
     }
 
     async listAnnotatedTags(repoPath: string, callback: ParseListTagsCallback): Promise<void> {
+
         // See: https://git-scm.com/docs/git-for-each-ref#Documentation/git-for-each-ref.txt---formatltformatgt
         const fields = Object.entries<string>({
             id: 'objectname',
@@ -97,7 +100,7 @@ export class GitService {
             rtype: '*objecttype'
         });
 
-        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}`, 'refs/tags/']);
+        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}${seperator}`, 'refs/tags/']);
 
         for (const {val, inputLine} of GitUtils.parseSerializedResponse<{id, type, tm, an, ae, t, rid, rtype}>(result, seperator)) {
 
@@ -153,10 +156,33 @@ export class GitService {
         return GitUtils.parseTreeItems(result);
     }
 
-    async listStashes(repoPath: string): Promise<Generator<GitStashLine>> {
-        const fields = ['H', 'gD'];
-        const result = await this.gitExecute(['-C', repoPath, 'stash', 'list', `--format=${fields.map(field => `${field}:%${field}${seperator}`).join("")}${seperator}`]);
-        return GitUtils.parseStashList(result, seperator);
+    async listStashes(repoPath: string, callback: ParseListStashesCallback): Promise<void> {
+
+        // See: https://git-scm.com/docs/pretty-formats for a list of all placeholders
+        const fields = Object.entries<string>({
+            id: 'H', // Stash ID
+            name: 'gD', // Reflog name
+            message: 'gs', // Reflog subject
+            timestamp: 'ct', // Commit date
+        });
+
+        const result = await this.gitExecute(['-C', repoPath, 'stash', 'list', `--format=${fields.map(field => `${field[0]}:%${field[1]}${seperator}`).join("")}`]);
+
+        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{id, name, message, timestamp}>(result, seperator)) {
+
+            stringNotNullNotEmpty(val.id, `Unexpected objectId for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.name, `Unexpected name for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.message, `Unexpected message for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.timestamp, `Unexpected timestamp for line: '${inputLine}', repo: '${repoPath}'`);
+
+            const ref = GitUtils.parseExplicitRef(val.name);
+
+            if (!isStashRef(ref)) {
+                throw error(`Unexpected ref: '${ref}' for line: '${inputLine}', repo: '${repoPath}'`);
+            }
+
+            callback.stash(ref, val.message, parseInt(val.timestamp, 10));
+        }
     }
 
     async listAllCommits(repoPath: string): Promise<Generator<GitLogLine>> {
@@ -211,8 +237,18 @@ export class GitService {
 
         while (true) {
 
-            sourceCommits.push(sourceCommitId);
-            targetCommits.push(targetCommitId);
+            // Handle loops (see end of loop - a branch with no first-parent is it's own first-parent)
+            if (sourceCommits.includes(sourceCommitId) && targetCommits.includes(targetCommitId)) {
+                return null;
+            }
+
+            if (!sourceCommits.includes(sourceCommitId)) {
+                sourceCommits.push(sourceCommitId);
+            }
+
+            if (!targetCommits.includes(targetCommitId)) {
+                targetCommits.push(targetCommitId);
+            }
 
             const mergeBaseId = this.firstCommonElement(sourceCommits, targetCommits);
             if (mergeBaseId) {
@@ -224,8 +260,8 @@ export class GitService {
             }
 
             [sourceCommitId, targetCommitId] = await Promise.all([
-                await lookupFirstParent(sourceCommitId),
-                await lookupFirstParent(targetCommitId)]);
+                await lookupFirstParent(sourceCommitId) || sourceCommitId,
+                await lookupFirstParent(targetCommitId) || targetCommitId]);
         }
     }
 

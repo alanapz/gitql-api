@@ -1,3 +1,4 @@
+import { PersistentCacheService } from "src/cache/persistent-cache.service";
 import { error, notNull, stringNotNullNotEmpty } from "src/check";
 import {
     BranchRef,
@@ -7,8 +8,10 @@ import {
     isTagRef,
     isTrackingBranchRef,
     ParseListRefsCallback,
+    ParseListStashesCallback,
     ParseListTagsCallback,
     Ref,
+    RefDistance,
     StashRef,
     TagRef,
     TrackingBranchRef
@@ -63,9 +66,8 @@ export class RepositoryModelImpl implements RepositoryModel {
     private readonly _cachedRefDistances = asyncMap<string, RefDistanceModel>();
     private readonly _cachedWorkingDirectories = asyncMap<string, WorkingDirectoryModel>();
 
-    constructor(public readonly path: string, public readonly gitService: GitService) {
+    constructor(public readonly path: string, public readonly gitService: GitService, public readonly persistentCacheService: PersistentCacheService) {
         stringNotNullNotEmpty(path, 'path');
-        notNull(gitService, 'gitService');
     }
 
     get allBranches() {
@@ -90,9 +92,22 @@ export class RepositoryModelImpl implements RepositoryModel {
     }
 
     get allStashes() {
-        return this._allStashes.fetch(async () => Array.from(await this.gitService.listStashes(this.path))
-            .map(result => new StashRefModelImpl(this, result.ref, result))
-            .reduce(map_reducer(stash => stash.ref.refName), new Map<string, StashRefModel>()));
+        return this._allStashes.fetch(async () => {
+
+            const results = new Map<string, StashRefModel>();
+            const repository = this;
+
+            const callback: ParseListStashesCallback = {
+
+                stash(ref: StashRef, message: string, timestamp: number) {
+                    results.set(ref.refName, new StashRefModelImpl(repository, ref, message, timestamp));
+                }
+            };
+
+            await this.gitService.listStashes(this.path, callback);
+
+            return results;
+        });
     }
 
     get allRefs(): Promise<Map<string, RefModel>> {
@@ -140,8 +155,8 @@ export class RepositoryModelImpl implements RepositoryModel {
 
             const callback: ParseListTagsCallback = {
 
-                tagToCommit(annotatedTagId: string, commitId: string, tagMessage: string, tagAuthor: GitPrincipal) {
-                    results.set(annotatedTagId, new AnnotatedTagModelImpl(repository, annotatedTagId, commitId, tagMessage, tagAuthor));
+                tagToCommit(annotatedTagId: string, commitId: string, message: string, author: GitPrincipal) {
+                    results.set(annotatedTagId, new AnnotatedTagModelImpl(repository, annotatedTagId, commitId, message, author));
                 }
             };
 
@@ -231,13 +246,12 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Stash not found: '${ref.refName}'`)});
     }
 
-    buildRefDistance(source: Ref, target: Ref, supplier: () => Promise<{mergeBase: string, ahead: number, behind: number}>): Promise<RefDistanceModel> {
-        notNull(source, "source");
-        notNull(target, "target");
-        notNull(supplier, "supplier");
+    buildRefDistance(source: Ref, target: Ref, supplier: () => Promise<RefDistance>): Promise<RefDistanceModel> {
+        // We have two levels of cache: local (per-repo) and global
+        // (We do this as ref distance is expensive and refs are immutable)
         return this._cachedRefDistances.fetch(`${source.refName}_${target.refName}`, async () => {
             const result = await supplier();
-            return new RefDistanceModelImpl(this, source, target, result.ahead, result.behind, result.mergeBase);
+            return new RefDistanceModelImpl(this, source, target, result.ahead, result.behind, result.mergeBaseId);
         });
     }
 

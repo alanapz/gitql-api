@@ -22,6 +22,10 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
         return `${this.ref.remote}/${this.ref.name}`;
     }
 
+    get commitId() {
+        return Promise.resolve(this._commitId);
+    }
+
     get commit() {
         return this._commit.fetch(() => this.repository.lookupCommit(this._commitId, 'throw'));
     }

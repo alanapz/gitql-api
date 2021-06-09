@@ -8,11 +8,13 @@ export class AnnotatedTagRefModelImpl implements TagRefModel {
 
     readonly kind = "TAG";
 
+    private readonly _commitId = lazyValue<string>();
+
     private readonly _commit = lazyValue<CommitModel>();
 
-    private readonly _tagMessage = lazyValue<string>();
+    private readonly _message = lazyValue<string>();
 
-    private readonly _tagAuthor = lazyValue<GitPrincipal>();
+    private readonly _author = lazyValue<GitPrincipal>();
 
     private readonly _annotatedTag = lazyValue<AnnotatedTagModel>();
 
@@ -24,6 +26,10 @@ export class AnnotatedTagRefModelImpl implements TagRefModel {
         return this.name;
     }
 
+    get commitId() {
+        return this._commitId.fetch(async () => (await this.annotatedTag).commitId);
+    }
+
     get commit() {
         return this._commit.fetch(async () => (await this.annotatedTag).commit);
     }
@@ -32,12 +38,12 @@ export class AnnotatedTagRefModelImpl implements TagRefModel {
         return this.ref.name;
     }
 
-    get tagMessage() {
-        return this._tagMessage.fetch(async () => (await this.annotatedTag).tagMessage);
+    get message() {
+        return this._message.fetch(async () => (await this.annotatedTag).message);
     }
 
-    get tagAuthor() {
-        return this._tagAuthor.fetch(async () => (await this.annotatedTag).tagAuthor);
+    get author() {
+        return this._author.fetch(async () => (await this.annotatedTag).author);
     }
 
     private get annotatedTag() {

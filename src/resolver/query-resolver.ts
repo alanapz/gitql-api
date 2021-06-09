@@ -1,4 +1,5 @@
 import { Args, Query, Resolver } from "@nestjs/graphql";
+import { PersistentCacheService } from "src/cache/persistent-cache.service";
 import { stringNotNullNotEmpty } from "src/check";
 import { ConfigService } from "src/config/config.service";
 import { GitService } from "src/git/git.service";
@@ -16,6 +17,7 @@ export class QueryResolver {
     constructor(
         private readonly gitService: GitService,
         private readonly configService: ConfigService,
+        private readonly persistentCacheService: PersistentCacheService,
         private readonly repoService: RepositoryService) {
     }
 
@@ -51,7 +53,7 @@ export class QueryResolver {
             }
 
             if (await this.gitService.isGitRepoPath(filePath)) {
-                repositories.push(new RepositoryModelImpl(filePath, this.gitService));
+                repositories.push(new RepositoryModelImpl(filePath, this.gitService, this.persistentCacheService));
                 continue;
             }
 

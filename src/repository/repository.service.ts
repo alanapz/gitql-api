@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PersistentCacheService } from "src/cache/persistent-cache.service";
 import { error, stringNotNullNotEmpty } from "src/check";
 import { ConfigService } from "src/config/config.service";
 import { GitService } from "src/git/git.service";
@@ -8,8 +9,10 @@ import { RepositoryModelImpl } from "src/repository/repository-model-impl";
 @Injectable()
 export class RepositoryService {
 
-    constructor(private readonly configService: ConfigService, private readonly gitService: GitService) {
-
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly gitService: GitService,
+        private readonly persistentCacheService: PersistentCacheService) {
     }
 
     async openRepository(fullPath: string): Promise<RepositoryModel> {
@@ -19,6 +22,6 @@ export class RepositoryService {
             throw error(`Folder is not a valid Git repository: '${fullPath}'`);
         }
 
-        return new RepositoryModelImpl(fullPath, this.gitService);
+        return new RepositoryModelImpl(fullPath, this.gitService, this.persistentCacheService);
     }
 }

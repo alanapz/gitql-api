@@ -102,7 +102,13 @@ export class CommitModelImpl implements CommitModel {
 
             // We map result into temporary object as filter(async) doesn't do what we imagine it to do !
             const results = await Promise.all((await map_values(this.repository.allRefs)).map(async ref => {
-                const contains = ((await (await ref.commit).ancestors).includes(this));
+                const refHeadId = await ref.commitId;
+
+                // Lookup via cache first as traversing ancestors can be expensive
+                const contains = this.repository.persistentCacheService.isReachableBy(
+                    this.id,
+                    refHeadId, async () => ((await (await ref.commit).ancestors).includes(this)));
+
                 return { ref, contains };
             }));
 

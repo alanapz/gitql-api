@@ -1,5 +1,3 @@
-scalar GitTimestamp
-
 enum GitWorkingDirectoryItemStatus {
     ADDED
     COPIED
@@ -111,28 +109,35 @@ type GitRepository {
     stashes: [GitStash!]!
     stash(name: String!): GitStash
     #remotes: [GitRef!]!
-    lastFetchDate: GitTimestamp
+    lastFetchDate: Int
     head: GitRef
     workingDirectory: GitWorkingDirectory
 }
 
 type GitStash implements GitRef {
+    """Returns stash message"""
+    message: String!
+    """Returns the stash creation timestamp"""
+    timestamp: Int!
     """eg: refs/stash@{0} (inherited from GitRef)"""
     refName: String!
     """eg: stash@{1} (inherited from GitRef)"""
     displayName: String!
     repository: GitRepository!
-    commit: GitCommit!
+    """Always returns null"""
+    commit: GitCommit
+    """Always returns empty"""
     ancestors(count: Int!):  [GitCommit!]!
+    """Always returns null"""
     distance(refName: String): GitRefDistance
 }
 
 type GitTag implements GitRef {
     tagName: String!
     """Returns tag message annotated tags, commit subject for lightweight tags"""
-    tagMessage: String!
+    message: String!
     """Returns tag author for annotated tags, commit author for lightweight tags"""
-    tagAuthor: GitPrincipal!
+    author: GitPrincipal!
     """eg: refs/tags/v1 (inherited from GitRef)"""
     refName: String!
     """Same as tagName (inherited from GitRef)"""

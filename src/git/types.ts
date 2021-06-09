@@ -13,11 +13,6 @@ export interface GitLogLine {
     refNotes?: string[];
 }
 
-export interface GitStashLine {
-    ref: StashRef;
-    commitId?: string;
-}
-
 export enum GitObjectType {
     Blob = "blob",
     Tree = "tree",

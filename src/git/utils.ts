@@ -6,7 +6,6 @@ import {
     GitObject,
     GitObjectDetails,
     GitObjectType,
-    GitStashLine,
     GitTreeItem,
     GitTreeItemType,
     WorkingDirectoryItem
@@ -223,7 +222,7 @@ export class GitUtils {
     }
 
     static *parseSerializedResponse<T extends Record<string, string>>(input: string, splitBy: string): Generator<{val: Record<keyof T, string>, inputLine: string}> {
-        for (const inputLine of input.trim().split("\n").map(val => val.trim())) {
+        for (const inputLine of input.trim().split(`${splitBy}${splitBy}`).map(val => val.trim())) {
             if (inputLine.length) {
 
                 const instance = ({} as Record<keyof T, string>);
@@ -282,43 +281,6 @@ export class GitUtils {
                 };
             }
         }
-    }
-
-    static *parseStashList(input: string, splitBy: string): Generator<GitStashLine> {
-        for (const inputLine of input.trim().split(`${splitBy}${splitBy}`).map(val => val.trim())) {
-            if (inputLine.length) {
-                if (inputLine.length) {
-                    yield GitUtils.parseGitStashList(inputLine, splitBy);
-                }
-            }
-        }
-    }
-
-    private static parseGitStashList(inputLine: string, splitBy: string): GitStashLine {
-
-        const val: Partial<{ commitId: string, refName: string }> = {};
-
-        for (const inputComponent of inputLine.split(splitBy).map(val => val.trim())) {
-            if (inputComponent.length) {
-
-                let matcher: RegExpMatchArray;
-
-                if ((matcher = inputComponent.trim().match(/^H:(?<commitId>[a-f0-9]+)$/))) {
-                    val.commitId = matcher.groups["commitId"];
-                }
-                else if ((matcher = inputComponent.trim().match(/^gD:(?<refName>.+)$/))) {
-                    val.refName = matcher.groups["refName"];
-                }
-                else {
-                    throw error(`Unexpected component: '${inputComponent}' for line: '${inputLine}'`);
-                }
-            }
-        }
-
-        return {
-            commitId: val.commitId,
-            ref: GitUtils.toStashRef(val.refName)
-        };
     }
 
     static *parseGitLog(input: string, splitBy: string): Generator<GitLogLine> {

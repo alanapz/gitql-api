@@ -10,9 +10,9 @@ export class LightweightTagRefModelImpl implements TagRefModel {
 
     private readonly _commit = lazyValue<CommitModel>();
 
-    private readonly _tagMessage = lazyValue<string>();
+    private readonly _message = lazyValue<string>();
 
-    private readonly _tagAuthor = lazyValue<GitPrincipal>();
+    private readonly _author = lazyValue<GitPrincipal>();
 
     constructor(readonly repository: RepositoryModel, readonly ref: TagRef, private readonly _commitId: string) {
 
@@ -20,6 +20,10 @@ export class LightweightTagRefModelImpl implements TagRefModel {
 
     get displayName() {
         return this.name;
+    }
+
+    get commitId() {
+        return Promise.resolve(this._commitId);
     }
 
     get commit() {
@@ -30,11 +34,11 @@ export class LightweightTagRefModelImpl implements TagRefModel {
         return this.ref.name;
     }
 
-    get tagMessage() {
-        return this._tagMessage.fetch(async () => (await this.commit).subject);
+    get message() {
+        return this._message.fetch(async () => (await this.commit).subject);
     }
 
-    get tagAuthor() {
-        return this._tagAuthor.fetch(async () => (await this.commit).author);
+    get author() {
+        return this._author.fetch(async () => (await this.commit).author);
     }
 }

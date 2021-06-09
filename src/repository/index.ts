@@ -1,5 +1,6 @@
+import { PersistentCacheService } from "src/cache/persistent-cache.service";
 import { GitWorkingDirectoryItemStatus } from "src/generated/graphql";
-import { BranchRef, GitPrincipal, Ref, StashRef, TagRef, TrackingBranchRef } from "src/git";
+import { BranchRef, GitPrincipal, Ref, RefDistance, StashRef, TagRef, TrackingBranchRef } from "src/git";
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitService } from "src/git/git.service";
 import { IfNotFound } from "src/utils/utils";
@@ -7,9 +8,10 @@ import { IfNotFound } from "src/utils/utils";
 export interface AnnotatedTagModel {
     id: string;
     repository: RepositoryModel;
+    commitId: Promise<string>;
     commit: Promise<CommitModel>;
-    tagMessage: Promise<string>;
-    tagAuthor: Promise<GitPrincipal>;
+    message: Promise<string>;
+    author: Promise<GitPrincipal>;
 }
 
 export interface BlobModelParams {
@@ -53,6 +55,7 @@ export interface RefModel {
     ref: Ref;
     displayName: string;
     repository: RepositoryModel;
+    commitId: Promise<string>;
     commit: Promise<CommitModel>;
 }
 
@@ -70,12 +73,14 @@ export interface TrackingBranchRefModel extends RefModel {
 export interface TagRefModel extends RefModel {
     kind: "TAG";
     name: string;
-    tagMessage: Promise<string>;
-    tagAuthor: Promise<GitPrincipal>;
+    message: Promise<string>;
+    author: Promise<GitPrincipal>;
 }
 
 export interface StashRefModel extends RefModel {
     kind: "STASH";
+    message: Promise<string>;
+    timestamp: Promise<number>;
 }
 
 export function isBranchRefModel(obj: RefModel): obj is BranchRefModel {
@@ -139,8 +144,9 @@ export interface RepositoryModel {
     lookupTrackingBranch: (ref: TrackingBranchRef, ifNotFound: IfNotFound) => Promise<TrackingBranchRefModel>;
     lookupTag: (ref: TagRef, ifNotFound: IfNotFound) => Promise<TagRefModel>;
     lookupStash: (ref: StashRef, ifNotFound: IfNotFound) => Promise<StashRefModel>;
-    buildRefDistance: (source: Ref, target: Ref, supplier: () => Promise<{ahead: number, behind: number, mergeBase: string}>) => Promise<RefDistanceModel>;
+    buildRefDistance: (source: Ref, target: Ref, supplier: () => Promise<RefDistance>) => Promise<RefDistanceModel>;
     gitService: GitService;
+    persistentCacheService: PersistentCacheService;
     head: Promise<RefModel>;
     gitConfig: Promise<GitConfigFile>;
     lastFetchDate: Promise<number>;
@@ -164,5 +170,6 @@ export interface WorkingDirectoryItemModel {
 export interface RefDistanceModel {
     ahead: Promise<number>;
     behind: Promise<number>;
+    mergeBaseId: Promise<string>;
     mergeBase: Promise<CommitModel>;
 }
