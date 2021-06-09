@@ -1,6 +1,7 @@
 import { error } from "src/check";
 import { GitStash } from "src/generated/graphql";
-import { GitStashLine, StashRef } from "src/git/types";
+import { StashRef } from "src/git";
+import { GitStashLine } from "src/git/types";
 import { CommitModel, RepositoryModel, StashRefModel } from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
 
@@ -16,6 +17,9 @@ export class StashRefModelImpl implements StashRefModel {
 
     constructor(readonly repository: RepositoryModel, readonly ref: StashRef, private readonly _input: GitStashLine) {
         this._commitId.setIfNotNull(_input.commitId);
+        console.log("STASHREF", _input.commitId);
+        console.log("STASHREF", _input);
+        console.log("STASHREF", ref);
     }
 
     get displayName() {

@@ -1,5 +1,6 @@
 import { error } from "src/check";
-import { GitLogLine, GitPrincipal } from "src/git/types";
+import { GitPrincipal } from "src/git";
+import { GitLogLine } from "src/git/types";
 import { CommitModel, RefModel, RepositoryModel, TreeModel } from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
 import { map_values } from "src/utils/utils";

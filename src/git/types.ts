@@ -1,35 +1,4 @@
-export type Ref = BranchRef | TrackingBranchRef | TagRef | StashRef;
-
-export interface BranchRef {
-    kind: "BRANCH",
-    refName: string;
-    name: string;
-}
-
-export interface TrackingBranchRef {
-    kind: "TRACKING",
-    refName: string;
-    remote: string;
-    name: string;
-}
-
-export interface TagRef {
-    kind: "TAG",
-    refName: string;
-    name: string;
-}
-
-export interface StashRef {
-    kind: "STASH",
-    refName: string;
-    name: string;
-}
-
-export interface GitPrincipal {
-    name: string;
-    emailAddress: string;
-    timestamp: number;
-}
+import { GitPrincipal, StashRef } from "src/git";
 
 export type GitLogField = 'H' | 'T' | 'P' | 'an' | 'ae' | 'at' | 'cn' | 'ce' | 'ct' | 'D' | 's' | 'B';
 
@@ -104,28 +73,6 @@ export interface WorkingDirectoryItem {
     unknown?: boolean;
     broken?: boolean;
     untracked?: boolean;
-}
-
-export interface ParseRefListCallback {
-    branch: (ref: BranchRef, commitId: string) => void;
-    trackingBranch: (ref: TrackingBranchRef, commitId: string) => void;
-    tag: (ref: TagRef, targetId: string) => void;
-}
-
-export function isBranchRef(obj: Ref): obj is BranchRef {
-    return (obj.kind === "BRANCH");
-}
-
-export function isTrackingBranchRef(obj: Ref): obj is TrackingBranchRef {
-    return (obj.kind === "TRACKING");
-}
-
-export function isTagRef(obj: Ref): obj is TagRef {
-    return (obj.kind === "TAG");
-}
-
-export function isStashRef(obj: Ref): obj is StashRef {
-    return (obj.kind === "STASH");
 }
 
 export function isGitBlobObject(obj: GitObjectDetails): obj is GitBlob {

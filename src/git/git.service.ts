@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { stringNotNullNotEmpty } from "src/check";
+import { error, stringNotNullNotEmpty } from "src/check";
+import {
+    isBranchRef,
+    isStashRef,
+    isTagRef,
+    isTrackingBranchRef,
+    ParseListRefsCallback,
+    ParseListTagsCallback,
+    Ref
+} from "src/git";
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitConfigFileParser } from "src/git/git-config-file-parser";
-import {
-    GitLogField,
-    GitLogLine,
-    GitObject,
-    GitStashLine,
-    GitTreeItem,
-    ParseRefListCallback,
-    Ref,
-    WorkingDirectoryItem
-} from "src/git/types";
+import { GitLogField, GitLogLine, GitObject, GitStashLine, GitTreeItem, WorkingDirectoryItem } from "src/git/types";
 import { GitUtils } from "src/git/utils";
 import { ioUtils } from "src/utils/io-utils";
+import { record_to_map } from "src/utils/utils";
 
 const fs = require("fs/promises");
 const path = require("path");
@@ -30,9 +31,111 @@ export class GitService {
         return (fstat && fstat.isDirectory());
     }
 
-    async listRefs(repoPath: string, callback: ParseRefListCallback): Promise<void> {
-        const result = await this.gitExecute(['-C', repoPath, 'show-ref']);
-        GitUtils.parseRefListResponse(result, callback);
+    async listRefs(repoPath: string, callback: ParseListRefsCallback): Promise<void> {
+        // See: https://git-scm.com/docs/git-for-each-ref#Documentation/git-for-each-ref.txt---formatltformatgt
+        const fields = Array.from(record_to_map({
+            ref: 'refname',
+            id: 'objectname',
+            type: 'objecttype',
+            rtype: '*objecttype' }));
+
+        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}`]);
+
+        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{ref, id, type, rtype}>(result, seperator)) {
+
+            stringNotNullNotEmpty(val.ref, `Unexpected refname for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.id, `Unexpected objectId for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.type, `Unexpected objectType for line: '${inputLine}', repo: '${repoPath}'`);
+
+            // Skip pseudo "stash"
+            if (val.ref === 'refs/stash') {
+                continue;
+            }
+
+            // We point directly to a commit - either branch, tracking branch, or lightweight tag
+            const ref = GitUtils.parseExplicitRef(val.ref);
+
+            if (isBranchRef(ref) && val.type === 'commit') {
+                callback.branch(ref, val.id);
+            }
+            else if (isTrackingBranchRef(ref) && val.type === 'commit') {
+                callback.trackingBranch(ref, val.id);
+            }
+            else if (isTagRef(ref) && val.type === 'commit') {
+                // Lightweight tag to commit
+                callback.lightweightTag(ref, val.id);
+            }
+            else if (isTagRef(ref) && (val.type === 'blob' || val.type === 'tree')) {
+                // Skip lightweight tags to non-commit objects
+            }
+            else if (isTagRef(ref) && val.type === 'tag' && val.rtype === 'commit') {
+                // Annotated tag to commit
+                callback.annotatedTag(ref, val.id);
+            }
+            else if (isTagRef(ref) && val.type === 'tag' && (val.rtype === 'blob' || val.rtype === 'tree')) {
+                // Skip annotated tags to non-commit objects
+            }
+            else if (isTagRef(ref) && val.type === 'tag' && val.rtype === 'tag') {
+                // We also skip annotated tags to annotated-tags because WTH
+            }
+            else {
+                throw error(`Unexpected object type for input line: '${inputLine}', repo: '${repoPath}'`);
+            }
+        }
+    }
+
+    async listAnnotatedTags(repoPath: string, callback: ParseListTagsCallback): Promise<void> {
+        // See: https://git-scm.com/docs/git-for-each-ref#Documentation/git-for-each-ref.txt---formatltformatgt
+        const fields = Object.entries<string>({
+            id: 'objectname',
+            type: 'objecttype',
+            tm: 'subject',
+            an: 'taggername',
+            ae: 'taggeremail',
+            t: 'taggerdate:unix',
+            rid: '*objectname',
+            rtype: '*objecttype'
+        });
+
+        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}`, 'refs/tags/']);
+
+        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{id, type, tm, an, ae, t, rid, rtype}>(result, seperator)) {
+
+            if (val.type === 'commit' || val.type === 'blob' || val.type === 'tree') {
+                // Skip lightweight tags
+                continue;
+            }
+
+            if (val.type !== 'tag') {
+                throw error(`Unexpected object type: '${val.type}' for line: '${inputLine}'`);
+            }
+
+            stringNotNullNotEmpty(val.id, `Unexpected objectId for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.rid, `Unexpected targetId for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.tm, `Unexpected message for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.an, `Unexpected authorName for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.ae, `Unexpected authorEmail for line: '${inputLine}', repo: '${repoPath}'`);
+            stringNotNullNotEmpty(val.t, `Unexpected timestamp for line: '${inputLine}', repo: '${repoPath}'`);
+
+            if (val.rtype === 'blob' || val.rtype === 'tree') {
+                // Skip annotated tags to non-commit objects
+                continue;
+            }
+            if (val.rtype === 'tag') {
+                // We also skip annotated tags to annotated-tags because WTH
+                continue;
+            }
+
+            if (val.rtype !== 'commit') {
+                throw error(`Unexpected target type: '${val.rtype}' for line: '${inputLine}', repo: '${repoPath}'`);
+            }
+
+            callback.tagToCommit(val.id, val.rid, val.tm, {
+                name: val.an,
+                emailAddress: val.ae,
+                timestamp: parseInt(val.t, 10)
+            });
+        }
     }
 
     async listObjects(repoPath: string): Promise<Generator<GitObject>> {
@@ -51,8 +154,6 @@ export class GitService {
     }
 
     async listStashes(repoPath: string): Promise<Generator<GitStashLine>> {
-        stringNotNullNotEmpty(repoPath, "repoPath");
-        //
         const fields = ['H', 'gD'];
         const result = await this.gitExecute(['-C', repoPath, 'stash', 'list', `--format=${fields.map(field => `${field}:%${field}${seperator}`).join("")}${seperator}`]);
         return GitUtils.parseStashList(result, seperator);

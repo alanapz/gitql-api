@@ -1,4 +1,4 @@
-import { BranchRef, TrackingBranchRef } from "src/git/types";
+import { BranchRef, TrackingBranchRef } from "src/git";
 
 export interface GitRefspecConfig {
     value: string;

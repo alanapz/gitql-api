@@ -1,8 +1,16 @@
 import { GitWorkingDirectoryItemStatus } from "src/generated/graphql";
+import { BranchRef, GitPrincipal, Ref, StashRef, TagRef, TrackingBranchRef } from "src/git";
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitService } from "src/git/git.service";
-import { BranchRef, GitPrincipal, Ref, StashRef, TagRef, TrackingBranchRef } from "src/git/types";
 import { IfNotFound } from "src/utils/utils";
+
+export interface AnnotatedTagModel {
+    id: string;
+    repository: RepositoryModel;
+    commit: Promise<CommitModel>;
+    tagMessage: Promise<string>;
+    tagAuthor: Promise<GitPrincipal>;
+}
 
 export interface BlobModelParams {
     size?: number;
@@ -62,6 +70,8 @@ export interface TrackingBranchRefModel extends RefModel {
 export interface TagRefModel extends RefModel {
     kind: "TAG";
     name: string;
+    tagMessage: Promise<string>;
+    tagAuthor: Promise<GitPrincipal>;
 }
 
 export interface StashRefModel extends RefModel {
@@ -119,9 +129,11 @@ export interface RepositoryModel {
     allTags: Promise<Map<string, TagRefModel>>;
     allStashes: Promise<Map<string, StashRefModel>>;
     allReachableCommits: Promise<Map<string, CommitModel>>;
+    allAnnotatedTags: Promise<Map<string, AnnotatedTagModel>>;
     lookupCommit: (commitId: string, ifNotFound: IfNotFound) => Promise<CommitModel>;
     lookupBlob: (blobId: string, ifNotFound: IfNotFound) => Promise<BlobModel>;
     lookupTree: (treeId: string, ifNotFound: IfNotFound) => Promise<TreeModel>;
+    lookupAnnotatedTag: (annotatedTagId: string, ifNotFound: IfNotFound) => Promise<AnnotatedTagModel>;
     lookupRef: (ref: Ref, ifNotFound: IfNotFound) => Promise<RefModel>;
     lookupBranch: (ref: BranchRef, ifNotFound: IfNotFound) => Promise<BranchRefModel>;
     lookupTrackingBranch: (ref: TrackingBranchRef, ifNotFound: IfNotFound) => Promise<TrackingBranchRefModel>;

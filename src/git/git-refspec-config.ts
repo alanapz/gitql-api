@@ -1,6 +1,6 @@
 import { error } from "src/check";
+import { BranchRef, TrackingBranchRef } from "src/git";
 import { GitRefspecConfig } from "src/git/git-config-file";
-import { BranchRef, TrackingBranchRef } from "src/git/types";
 import { GitUtils } from "src/git/utils";
 
 // https://git-scm.com/book/en/v2/Git-Internals-The-Refspec

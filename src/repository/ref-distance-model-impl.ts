@@ -1,4 +1,4 @@
-import { Ref } from "src/git/types";
+import { Ref } from "src/git";
 import { RefDistanceModel, RepositoryModel } from "src/repository";
 
 export class RefDistanceModelImpl implements RefDistanceModel{

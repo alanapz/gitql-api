@@ -1,7 +1,7 @@
 import { error } from "src/check";
+import { BranchRef, Ref, StashRef, TagRef, TrackingBranchRef } from "src/git";
 import { GitObjectParserProcessor } from "src/git/git-object-parser";
 import {
-    BranchRef,
     GitLogLine,
     GitObject,
     GitObjectDetails,
@@ -9,11 +9,6 @@ import {
     GitStashLine,
     GitTreeItem,
     GitTreeItemType,
-    ParseRefListCallback,
-    Ref,
-    StashRef,
-    TagRef,
-    TrackingBranchRef,
     WorkingDirectoryItem
 } from "src/git/types";
 
@@ -227,42 +222,29 @@ export class GitUtils {
         }
     }
 
-    static parseRefListResponse(input: string, callback: ParseRefListCallback): void {
+    static *parseSerializedResponse<T extends Record<string, string>>(input: string, splitBy: string): Generator<{val: Record<keyof T, string>, inputLine: string}> {
+        for (const inputLine of input.trim().split("\n").map(val => val.trim())) {
+            if (inputLine.length) {
 
-        let matcher;
+                const instance = ({} as Record<keyof T, string>);
 
-        for (const line of input.trim().split("\n")) {
+                for (const inputComponent of inputLine.split(splitBy).map(val => val.trim())) {
+                    if (inputComponent.length) {
 
-            if (!(matcher = line.match(/^\s*(?<target>[a-f0-9]+)\s+(?<name>refs\/.+)$/))) {
-                throw error(`Unparseable input line: '${line}'`);
-            }
+                        const matcher = inputComponent.trim().match(/^(?<key>[a-z]+):(?<value>.*)$/);
 
-            const targetId = matcher.groups["target"];
-            const refName = matcher.groups["name"];
+                        if (!matcher) {
+                            throw error(`Invalid component: '${inputComponent}' for line: '${inputLine}'`);
+                        }
 
-            if ((matcher = refName.match(/^refs\/heads\/(?<branchName>.+)$/))) {
-                callback.branch({
-                    kind: "BRANCH",
-                    refName,
-                    name: matcher.groups["branchName"]},
-                    targetId);
-            } else if ((matcher = refName.match(/^refs\/remotes\/(?<remoteName>.+?)\/(?<branchName>.+)$/))) {
-                callback.trackingBranch({
-                    kind: "TRACKING",
-                    refName,
-                    remote: matcher.groups["remoteName"],
-                    name: matcher.groups["branchName"]
-                }, targetId);
-            } else if ((matcher = refName.match(/^refs\/tags\/(?<tagName>.+)$/))) {
-                callback.tag({
-                    kind: "TAG",
-                    refName,
-                    name: matcher.groups["tagName"]},
-                    targetId);
-            } else if ((matcher = refName.match(/^refs\/stash$/))) {
-                // Ignore fake "stash" refs
-            } else {
-                throw error(`Unexpected type for input line: '${line}'`);
+                        const key = matcher.groups["key"];
+                        const value = matcher.groups["value"];
+
+                        (instance as any)[key] = value;
+                    }
+                }
+
+                yield {val: instance, inputLine};
             }
         }
     }
