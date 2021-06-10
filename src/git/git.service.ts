@@ -20,7 +20,8 @@ import { record_to_map } from "src/utils/utils";
 const fs = require("fs/promises");
 const path = require("path");
 
-const seperator = "¶¶¶";
+const lineSeperator = "µ";
+const recordSeperator = "¶";
 
 @Injectable()
 export class GitService {
@@ -41,9 +42,9 @@ export class GitService {
             type: 'objecttype',
             rtype: '*objecttype' }));
 
-        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}${seperator}`]);
+        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${recordSeperator}`).join("")}${lineSeperator}`]);
 
-        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{ref, id, type, rtype}>(result, seperator)) {
+        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{ref, id, type, rtype}>(result, lineSeperator, recordSeperator)) {
 
             stringNotNullNotEmpty(val.ref, `Unexpected refname for line: '${inputLine}', repo: '${repoPath}'`);
             stringNotNullNotEmpty(val.id, `Unexpected objectId for line: '${inputLine}', repo: '${repoPath}'`);
@@ -61,7 +62,10 @@ export class GitService {
                 callback.branch(ref, val.id);
             }
             else if (isTrackingBranchRef(ref) && val.type === 'commit') {
-                callback.trackingBranch(ref, val.id);
+                // Skip fake remote HEAD branches
+                if (ref.name !== 'HEAD') {
+                    callback.trackingBranch(ref, val.id);
+                }
             }
             else if (isTagRef(ref) && val.type === 'commit') {
                 // Lightweight tag to commit
@@ -100,9 +104,9 @@ export class GitService {
             rtype: '*objecttype'
         });
 
-        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${seperator}`).join("")}${seperator}`, 'refs/tags/']);
+        const result = await this.gitExecute(['-C', repoPath, 'for-each-ref', `--format=${fields.map(field => `${field[0]}:%(${field[1]})${recordSeperator}`).join("")}${lineSeperator}`, 'refs/tags/']);
 
-        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{id, type, tm, an, ae, t, rid, rtype}>(result, seperator)) {
+        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{id, type, tm, an, ae, t, rid, rtype}>(result, lineSeperator, recordSeperator)) {
 
             if (val.type === 'commit' || val.type === 'blob' || val.type === 'tree') {
                 // Skip lightweight tags
@@ -166,9 +170,9 @@ export class GitService {
             timestamp: 'ct', // Commit date
         });
 
-        const result = await this.gitExecute(['-C', repoPath, 'stash', 'list', `--format=${fields.map(field => `${field[0]}:%${field[1]}${seperator}`).join("")}`]);
+        const result = await this.gitExecute(['-C', repoPath, 'stash', 'list', `--format=${fields.map(field => `${field[0]}:%${field[1]}${recordSeperator}`).join("")}${lineSeperator}`]);
 
-        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{id, name, message, timestamp}>(result, seperator)) {
+        for (const {val, inputLine} of GitUtils.parseSerializedResponse<{id, name, message, timestamp}>(result, lineSeperator, recordSeperator)) {
 
             stringNotNullNotEmpty(val.id, `Unexpected objectId for line: '${inputLine}', repo: '${repoPath}'`);
             stringNotNullNotEmpty(val.name, `Unexpected name for line: '${inputLine}', repo: '${repoPath}'`);
@@ -198,8 +202,8 @@ export class GitService {
     }
 
     private async retrieveCommits(repoPath: string, params: string[], fields: GitLogField[]): Promise<Generator<GitLogLine>> {
-        const result = await this.gitExecute(['-C', repoPath, 'log', ... params, `--format=${fields.map(field => `${field}:%${field}${seperator}`).join("")}${seperator}`]);
-        return GitUtils.parseGitLog(result, seperator);
+        const result = await this.gitExecute(['-C', repoPath, 'log', ... params, `--format=${fields.map(field => `${field}:%${field}%n${recordSeperator}`).join("")}${lineSeperator}`]);
+        return GitUtils.parseGitLog(result, lineSeperator, recordSeperator);
     }
 
     async getRepoHead(repoPath: string): Promise<Ref> {
@@ -221,7 +225,7 @@ export class GitService {
         stringNotNullNotEmpty(repoPath, "repoPath");
         //
         const fileData = await fs.readFile(path.join(repoPath, ".git", "config"), { encoding: "UTF8", flags: "r"});
-        const parser = new GitConfigFileParser();
+        const parser = new GitConfigFileParser(repoPath);
 
         for (const inputLine of fileData.trim().split("\n")) {
             parser.nextLine(inputLine);
@@ -287,8 +291,7 @@ export class GitService {
 
     async fetchRepository(repoPath: string): Promise<void> {
         stringNotNullNotEmpty(repoPath, "repoPath");
-        // Can't return directly as Promise<string> isn't assignable to Promise<void>
-        await this.gitExecute(['-C', repoPath, 'fetch', '--all', '--prune', '--quiet']);
+        await this.gitExecute(['-C', repoPath, 'fetch', '--all', '--prune', '--tags', '--quiet']);
     }
 
     async getWorkingDirectoryStaged(repoPath: string, dirPath: string): Promise<Generator<WorkingDirectoryItem>> {
@@ -315,14 +318,9 @@ export class GitService {
         return GitUtils.parseListUntracked(data);
     }
 
-    async fetchAll(repoPath: string): Promise<void> {
-        stringNotNullNotEmpty(repoPath, "repoPath");
-        await this.gitExecute(['-C', repoPath, 'fetch', '--all', '--prune', '--tags']);
-    }
-
     async cleanWorkingDirectory(repoPath: string): Promise<void> {
         stringNotNullNotEmpty(repoPath, "repoPath");
-        await this.gitExecute(['-C', repoPath, 'clean', '-ffddx']);
+        await this.gitExecute(['-C', repoPath, 'clean', '-ffddx', '--quiet']);
     }
 
     private gitExecute(args: string[], input?: string): Promise<string> {
@@ -337,6 +335,9 @@ export class GitService {
 
             let output: string = "";
             let error: string = "";
+
+            cmd.stdout.setEncoding('utf-8');
+            cmd.stderr.setEncoding('utf-8');
 
             cmd.stdout.on('data', (data) => {
                 output += data.toString();

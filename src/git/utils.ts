@@ -221,13 +221,13 @@ export class GitUtils {
         }
     }
 
-    static *parseSerializedResponse<T extends Record<string, string>>(input: string, splitBy: string): Generator<{val: Record<keyof T, string>, inputLine: string}> {
-        for (const inputLine of input.trim().split(`${splitBy}${splitBy}`).map(val => val.trim())) {
+    static *parseSerializedResponse<T extends Record<string, string>>(input: string, lineSeperator: string, recordSeperator: string): Generator<{val: Record<keyof T, string>, inputLine: string}> {
+        for (const inputLine of input.trim().split(lineSeperator).map(val => val.trim())) {
             if (inputLine.length) {
 
                 const instance = ({} as Record<keyof T, string>);
 
-                for (const inputComponent of inputLine.split(splitBy).map(val => val.trim())) {
+                for (const inputComponent of inputLine.split(recordSeperator).map(val => val.trim())) {
                     if (inputComponent.length) {
 
                         const matcher = inputComponent.trim().match(/^(?<key>[a-z]+):(?<value>.*)$/);
@@ -283,15 +283,15 @@ export class GitUtils {
         }
     }
 
-    static *parseGitLog(input: string, splitBy: string): Generator<GitLogLine> {
-        for (const inputLine of input.trim().split(`${splitBy}${splitBy}`).map(val => val.trim())) {
+    static *parseGitLog(input: string, lineSeperator: string, recordSeperator: string): Generator<GitLogLine> {
+        for (const inputLine of input.trim().split(lineSeperator).map(val => val.trim())) {
             if (inputLine.length) {
-                yield GitUtils.parseGitLogLine(inputLine, splitBy);
+                yield GitUtils.parseGitLogLine(inputLine, recordSeperator);
             }
         }
     }
 
-    private static parseGitLogLine(inputLine: string, splitBy: string): GitLogLine {
+    private static parseGitLogLine(inputLine: string, recordSeperator: string): GitLogLine {
 
         const val: Partial<{
             id: string,
@@ -307,7 +307,7 @@ export class GitUtils {
             message: string,
             refNotes: string[]}> = {};
 
-        for (const inputComponent of inputLine.split(splitBy).map(val => val.trim())) {
+        for (const inputComponent of inputLine.split(recordSeperator).map(val => val.trim())) {
             if (inputComponent.length) {
 
                 let matcher: RegExpMatchArray;

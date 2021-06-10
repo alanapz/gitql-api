@@ -14,14 +14,29 @@ export class WorkingDirectoryResolver {
         return Promise.resolve(model.repository);
     }
 
+    @ResolveField("stagedLength")
+    async getStagedLength(@Parent() model: WorkingDirectoryModel): Promise<number> {
+        return (await model.staged).length;
+    }
+
     @ResolveField("staged")
     getStaged(@Parent() model: WorkingDirectoryModel): Promise<WorkingDirectoryItemModel[]> {
         return model.staged;
     }
 
+    @ResolveField("unstagedLength")
+    async getUnstagedLength(@Parent() model: WorkingDirectoryModel): Promise<number> {
+        return (await model.unstaged).length;
+    }
+
     @ResolveField("unstaged")
     getUnstaged(@Parent() model: WorkingDirectoryModel): Promise<WorkingDirectoryItemModel[]> {
         return model.unstaged;
+    }
+
+    @ResolveField("untrackedLength")
+    async getUntrackedLength(@Parent() model: WorkingDirectoryModel): Promise<number> {
+        return (await model.untracked).length;
     }
 
     @ResolveField("untracked")

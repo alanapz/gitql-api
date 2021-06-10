@@ -105,9 +105,10 @@ export class CommitModelImpl implements CommitModel {
                 const refHeadId = await ref.commitId;
 
                 // Lookup via cache first as traversing ancestors can be expensive
-                const contains = this.repository.persistentCacheService.isReachableBy(
+                const contains = await this.repository.persistentCacheService.isReachableBy(
                     this.id,
-                    refHeadId, async () => ((await (await ref.commit).ancestors).includes(this)));
+                    refHeadId,
+                    async () => ((await (await ref.commit).ancestors).includes(this)));
 
                 return { ref, contains };
             }));
