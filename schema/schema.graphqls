@@ -202,8 +202,11 @@ type GitTreeSubtreeItem implements GitTreeItem {
 type GitWorkingDirectory {
     path: String!
     repository: GitRepository!
+    stagedLength: Int!
     staged: [GitWorkingDirectoryItem!]!
+    unstagedLength: Int!
     unstaged: [GitWorkingDirectoryItem!]!
+    untrackedLength: Int!
     untracked: [GitWorkingDirectoryItem!]!
 }
 

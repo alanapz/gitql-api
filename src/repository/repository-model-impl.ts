@@ -275,18 +275,21 @@ export class RepositoryModelImpl implements RepositoryModel {
 
     get head() {
         return this._repoHead.fetch(async () => {
-
             const ref = await this.gitService.getRepoHead(this.path);
-
-            if (isBranchRef(ref)) {
-                return this.lookupBranch(ref, 'throw');
+            if (!ref) {
+                // Detached head
+                return null;
             }
+<<<<<<< HEAD
 
             if (isTrackingBranchRef(ref)) {
                 return this.lookupTrackingBranch(ref, 'throw');
             }
 
             throw error(`Unparseable head ref: '${ref.refName}' for repo: '${this.path}'`);
+=======
+            return this.lookupRef(ref, 'throw');
+>>>>>>> GQL13 - Improve stash support and bulk commit fetching
         });
     }
 

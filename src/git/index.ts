@@ -53,17 +53,17 @@ export interface ParseListStashesCallback {
 }
 
 export function isBranchRef(obj: Ref): obj is BranchRef {
-    return (obj.kind === "BRANCH");
+    return (obj && obj.kind === "BRANCH");
 }
 
 export function isTrackingBranchRef(obj: Ref): obj is TrackingBranchRef {
-    return (obj.kind === "TRACKING");
+    return (obj && obj.kind === "TRACKING");
 }
 
 export function isTagRef(obj: Ref): obj is TagRef {
-    return (obj.kind === "TAG");
+    return (obj && obj.kind === "TAG");
 }
 
 export function isStashRef(obj: Ref): obj is StashRef {
-    return (obj.kind === "STASH");
+    return (obj && obj.kind === "STASH");
 }

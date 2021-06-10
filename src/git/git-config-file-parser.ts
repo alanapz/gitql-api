@@ -31,6 +31,10 @@ export class GitConfigFileParser implements GitConfigFile {
 
     private static ignoredSection: ConfigFileSection = () => {};
 
+    constructor(private readonly repoPath: string) {
+
+    }
+
     nextLine(line: string): void {
 
         // Ignore empty lines
@@ -146,7 +150,7 @@ export class GitConfigFileParser implements GitConfigFile {
 
         const remote = this._remotes.get(branch.remoteName);
         if (!remote) {
-            throw error(`Unknown remote: ${branch.remoteName}`)
+            throw error(`Unknown remote: ${branch.remoteName} for repo: '${this.repoPath}'`);
         }
 
         const upstreamRef = GitUtils.toBranchRef(branch.upstreamName);

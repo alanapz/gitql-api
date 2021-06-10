@@ -15,7 +15,7 @@ export class RepositoryResolverMutator {
 
     @ResolveField("fetch")
     async fetchRepository(@Parent() model: RepositoryModel): Promise<RepositoryModel> {
-        await this.gitService.fetchAll(model.path);
+        await this.gitService.fetchRepository(model.path);
         return this.repoService.openRepository(model.path);
     }
 
