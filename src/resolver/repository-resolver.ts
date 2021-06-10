@@ -130,5 +130,10 @@ export class RepositoryResolver {
     getWorkingDirectory(@Parent() model: RepositoryModel): Promise<WorkingDirectoryModel> {
         return model.workingDirectory;
     }
+
+    @ResolveField("webUrl")
+    getWebUrl(@Parent() model: RepositoryModel): Promise<string> {
+        return model.webUrl;
+    }
 }
 

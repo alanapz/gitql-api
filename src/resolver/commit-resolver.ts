@@ -60,4 +60,9 @@ export class CommitResolver {
     getReachableBy(@Parent() model: CommitModel): Promise<RefModel[]> {
         return model.reachableBy;
     }
+
+    @ResolveField("webUrl")
+    getWebUrl(@Parent() model: RefModel): Promise<string> {
+        return model.webUrl;
+    }
 }

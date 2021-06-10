@@ -10,7 +10,13 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
 
     private readonly _commit = lazyValue<CommitModel>();
 
+<<<<<<< HEAD
     private readonly _remote = lazyValue<RemoteModel>();
+=======
+    private readonly _isTrunk = lazyValue<boolean>();
+
+    private readonly _webUrl = lazyValue<string>();
+>>>>>>> GQL14 - Add provider config support
 
     constructor(readonly repository: RepositoryModel, readonly ref: TrackingBranchRef, private readonly _commitId: string) {
 
@@ -32,7 +38,20 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
         return this._commit.fetch(() => this.repository.lookupCommit(this._commitId, 'throw'));
     }
 
+<<<<<<< HEAD
     get remote() {
         return this._remote.fetch(async () => this.repository.lookupRemote(this.ref.remote, 'throw'));
+=======
+    get isTrunk() {
+        return this._isTrunk.fetch(() => {
+
+        });
+    }
+
+    get webUrl() {
+        return this._isTrunk.fetch(() => {
+
+        });
+>>>>>>> GQL14 - Add provider config support
     }
 }
