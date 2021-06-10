@@ -41,6 +41,7 @@ export interface CommitModel {
     reachableBy: Promise<RefModel[]>;
     ancestors: Promise<CommitModel[]>;
     allAncestors: Promise<CommitModel[]>;
+    webUrl: Promise<string>;
 }
 
 export interface TreeModel {
@@ -69,6 +70,8 @@ export interface TrackingBranchRefModel extends RefModel {
     kind: "TRACKING";
     remote: Promise<RemoteModel>;
     name: string;
+    isTrunk: Promise<boolean>
+    webUrl: Promise<string>
 }
 
 export interface TagRefModel extends RefModel {
@@ -90,6 +93,10 @@ export function isBranchRefModel(obj: RefModel): obj is BranchRefModel {
 
 export function isTrackingBranchRefModel(obj: RefModel): obj is TrackingBranchRefModel {
     return (obj && obj.kind === "TRACKING");
+}
+
+export function isTagRefModel(obj: RefModel): obj is TagRefModel {
+    return (obj && obj.kind === "TAG");
 }
 
 export function isStashRefModel(obj: RefModel): obj is StashRefModel {
@@ -128,7 +135,7 @@ export interface TreeDescendantModel {
 }
 
 export interface RepositoryModel {
-    path: string
+    path: string;
     allRefs: Promise<Map<string, RefModel>>;
     allBranches: Promise<Map<string, BranchRefModel>>;
     allTrackingBranches: Promise<Map<string, TrackingBranchRefModel>>;
@@ -154,6 +161,7 @@ export interface RepositoryModel {
     gitConfig: Promise<GitConfigFile>;
     lastFetchDate: Promise<number>;
     workingDirectory: Promise<WorkingDirectoryModel>;
+    webUrl: Promise<string>;
 }
 
 export interface WorkingDirectoryModel {

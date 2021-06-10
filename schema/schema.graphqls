@@ -59,6 +59,7 @@ type GitCommit implements GitObject {
     ancestors(count: Int!):  [GitCommit!]!
     refNotes: [String!]!
     reachableBy: [GitRef!]!
+    webUrl: String
 }
 
 type GitPrincipal {
@@ -114,6 +115,7 @@ type GitRepository {
     lastFetchDate: Int
     head: GitRef
     workingDirectory: GitWorkingDirectory
+    webUrl: String
 }
 
 type GitStash implements GitRef {
@@ -140,6 +142,8 @@ type GitTag implements GitRef {
     message: String!
     """Returns tag author for annotated tags, commit author for lightweight tags"""
     author: GitPrincipal!
+    """Link to tag web page (if available)"""
+    webUrl: String
     """eg: refs/tags/v1 (inherited from GitRef)"""
     refName: String!
     """Same as tagName (inherited from GitRef)"""
@@ -153,6 +157,10 @@ type GitTag implements GitRef {
 type GitTrackingBranch implements GitRef {
     remote: GitRemote!
     branchName: String!
+    isTrunk: Boolean!
+    parent: GitTrackingBranch
+    parentDistance: GitRefDistance
+    webUrl: String
     # Inherited from GitRef
     refName: String!
     displayName: String!

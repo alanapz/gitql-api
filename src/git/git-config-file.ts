@@ -13,7 +13,12 @@ export interface GitRemoteConfig {
 }
 
 export interface GitConfigFile {
+<<<<<<< HEAD
     remotes: GitRemoteConfig[];
+=======
+    cloneUrl: string;
+    listRemotes: () => GitRemoteConfig[];
+>>>>>>> GQL14 - Add provider config support
     getRemote: (remoteName: string) => GitRemoteConfig;
     resolveUpstream: (ref: BranchRef) => TrackingBranchRef;
 }
