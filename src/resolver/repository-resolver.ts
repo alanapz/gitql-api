@@ -1,13 +1,14 @@
 import { Args, Parent, ResolveField, Resolver } from "@nestjs/graphql";
 import { stringNotNullNotEmpty } from "src/check";
 import { ConfigService } from "src/config/config.service";
-import { GitBranchFilter, GitRepository } from "src/generated/graphql";
+import { GitBranchFilter } from "src/generated/graphql";
 import { GitUtils } from "src/git/utils";
 import {
     BlobModel,
     BranchRefModel,
     CommitModel,
     RefModel,
+    RemoteModel,
     RepositoryModel,
     StashRefModel,
     TrackingBranchRefModel,
@@ -102,6 +103,17 @@ export class RepositoryResolver {
     getStashByName(@Parent() model: RepositoryModel, @Args('name') stashName: string): Promise<StashRefModel> {
         stringNotNullNotEmpty(stashName, 'stashName');
         return model.lookupStash(GitUtils.toStashRef(stashName), 'null');
+    }
+
+    @ResolveField("remotes")
+    listRemotes(@Parent() model: RepositoryModel): Promise<RemoteModel[]> {
+        return map_values(model.allRemotes);
+    }
+
+    @ResolveField("remote")
+    getRemoteByName(@Parent() model: RepositoryModel, @Args('name') remoteName: string): Promise<RemoteModel> {
+        stringNotNullNotEmpty(remoteName, 'remoteName');
+        return model.lookupRemote(remoteName, 'null');
     }
 
     @ResolveField("lastFetchDate")

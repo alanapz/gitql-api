@@ -1,5 +1,4 @@
 import { Parent, ResolveField, Resolver } from "@nestjs/graphql";
-import { GitBlob } from "src/generated/graphql";
 import { BlobModel, RepositoryModel } from "src/repository";
 
 @Resolver("GitBlob")

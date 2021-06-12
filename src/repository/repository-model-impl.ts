@@ -25,6 +25,7 @@ import {
     CommitModel,
     RefDistanceModel,
     RefModel,
+    RemoteModel,
     RepositoryModel,
     StashRefModel,
     TagRefModel,
@@ -39,6 +40,7 @@ import { BranchRefModelImpl } from "src/repository/branch-ref-model-impl";
 import { CommitModelImpl } from "src/repository/commit-model-impl";
 import { LightweightTagRefModelImpl } from "src/repository/lightweight-tag-ref-model-impl";
 import { RefDistanceModelImpl } from "src/repository/ref-distance-model-impl";
+import { RemoteModelImpl } from "src/repository/remote-model-impl";
 import { StashRefModelImpl } from "src/repository/stash-ref-model-impl";
 import { TrackingBranchRefModelImpl } from "src/repository/tracking-branch-ref-model-impl";
 import { TreeModelImpl } from "src/repository/tree-model-impl";
@@ -57,6 +59,8 @@ export class RepositoryModelImpl implements RepositoryModel {
 
     private readonly _allReachableCommits = lazyValue<Map<string, CommitModel>>();
     private readonly _allAnnotatedTags = lazyValue<Map<string, AnnotatedTagModel>>();
+
+    private readonly _allRemotes = lazyValue<Map<string, RemoteModel>>();
 
     private readonly _repoHead = lazyValue<RefModel>();
     private readonly _gitConfig = lazyValue<GitConfigFile>();
@@ -219,7 +223,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         return if_not_found({
             value: ifNotFound,
             result: (await this.allBranches).get(ref.refName),
-            error: () => error(`Branch not found: '${ref.refName}'`)});
+            error: () => error(`Branch not found: '${ref.refName}' for repo: '${this.path}'`)});
     }
 
     async lookupTrackingBranch(ref: TrackingBranchRef, ifNotFound: IfNotFound) {
@@ -227,7 +231,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         return if_not_found({
             value: ifNotFound,
             result: (await this.allTrackingBranches).get(ref.refName),
-            error: () => error(`Tracking branch not found: '${ref.refName}'`)});
+            error: () => error(`Tracking branch not found: '${ref.refName}' for repo: '${this.path}'`)});
     }
 
     async lookupTag(ref: TagRef, ifNotFound: IfNotFound) {
@@ -235,7 +239,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         return if_not_found({
             value: ifNotFound,
             result: (await this.allTags).get(ref.refName),
-            error: () => error(`Tag branch not found: '${ref.refName}'`)});
+            error: () => error(`Tag branch not found: '${ref.refName}' for repo: '${this.path}'`)});
     }
 
     async lookupStash(ref: StashRef, ifNotFound: IfNotFound) {
@@ -243,7 +247,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         return if_not_found({
             value: ifNotFound,
             result: (await this.allStashes).get(ref.refName),
-            error: () => error(`Stash not found: '${ref.refName}'`)});
+            error: () => error(`Stash not found: '${ref.refName}' for repo: '${this.path}'`)});
     }
 
     buildRefDistance(source: Ref, target: Ref, supplier: () => Promise<RefDistance>): Promise<RefDistanceModel> {
@@ -253,6 +257,20 @@ export class RepositoryModelImpl implements RepositoryModel {
             const result = await supplier();
             return new RefDistanceModelImpl(this, source, target, result.ahead, result.behind, result.mergeBaseId);
         });
+    }
+
+    get allRemotes() {
+        return this._allRemotes.fetch(async () => (await this.gitConfig).remotes
+            .map(remoteConfig => new RemoteModelImpl(this, remoteConfig.name, remoteConfig))
+            .reduce(map_reducer<string, RemoteModel>(remote => remote.name), new Map<string, RemoteModel>()));
+    }
+
+    async lookupRemote(name: string, ifNotFound: IfNotFound) {
+        stringNotNullNotEmpty(name, "name");
+        return if_not_found({
+            value: ifNotFound,
+            result: (await this.allRemotes).get(name),
+            error: () => error(`Remote not found: '${name}' for repo: '${this.path}'`)});
     }
 
     get head() {
@@ -268,7 +286,7 @@ export class RepositoryModelImpl implements RepositoryModel {
                 return this.lookupTrackingBranch(ref, 'throw');
             }
 
-            throw error(`Unparseable head ref: ${ref.refName}`);
+            throw error(`Unparseable head ref: '${ref.refName}' for repo: '${this.path}'`);
         });
     }
 

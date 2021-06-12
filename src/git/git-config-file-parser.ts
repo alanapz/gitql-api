@@ -1,7 +1,7 @@
 import { error } from "src/check";
+import { BranchRef, TrackingBranchRef } from "src/git";
 import { GitConfigFile, GitRefspecConfig, GitRemoteConfig } from "src/git/git-config-file";
 import { GitRefspecConfigImpl } from "src/git/git-refspec-config";
-import { BranchRef, TrackingBranchRef } from "src/git";
 import { GitUtils } from "src/git/utils";
 import { cacheMap } from "src/utils/cachemap";
 import { as } from "src/utils/utils";
@@ -23,7 +23,7 @@ type ConfigFileSection = (key: string, value: string) => void;
 
 export class GitConfigFileParser implements GitConfigFile {
 
-    private readonly remotes = cacheMap<string, GitRemoteConfigImpl>();
+    private readonly _remotes = cacheMap<string, GitRemoteConfigImpl>();
 
     private readonly branches = cacheMap<string, GitBranchConfigImpl>();
 
@@ -81,7 +81,7 @@ export class GitConfigFileParser implements GitConfigFile {
             return null;
         }
 
-        const remote = this.remotes.fetch(matcher[1], remoteName => as<GitRemoteConfigImpl>({
+        const remote = this._remotes.fetch(matcher[1], remoteName => as<GitRemoteConfigImpl>({
             name: remoteName,
             fetchUrls: [],
             pushUrls: [],
@@ -120,12 +120,12 @@ export class GitConfigFileParser implements GitConfigFile {
         }
     }
 
-    listRemotes() {
-        return [ ... this.remotes.values() ];
+    get remotes() {
+        return [ ... this._remotes.values() ];
     }
 
     getRemote(remoteName: string) {
-        return this.remotes.get(remoteName);
+        return this._remotes.get(remoteName);
     }
 
     // Returns the corresponding "upstream" for the given local branch
@@ -144,7 +144,7 @@ export class GitConfigFileParser implements GitConfigFile {
             return null;
         }
 
-        const remote = this.remotes.get(branch.remoteName);
+        const remote = this._remotes.get(branch.remoteName);
         if (!remote) {
             throw error(`Unknown remote: ${branch.remoteName}`)
         }

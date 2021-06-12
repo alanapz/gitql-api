@@ -22,10 +22,12 @@ export function stringNotNullNotEmpty(value: string, message?: string): string {
     return value;
 }
 
-function arrayNonNullNotEmpty<T>(value: T[], message: string, ... args: unknown[]): T[] {
-    if (!value || !value.length) {
-        console.error(message, value, ... args);
-        throw message;
+export function arrayNotNullNotEmpty<T>(value: T[], message?: string): T[] {
+    if (value === null || value === undefined) {
+        throw error(`array is null: '${message || 'value'}'`);
+    }
+    if (!value.length) {
+        throw error(`array empty: '${message || 'value'}'`);
     }
     return value;
 }

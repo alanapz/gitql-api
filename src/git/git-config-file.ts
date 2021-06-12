@@ -13,7 +13,7 @@ export interface GitRemoteConfig {
 }
 
 export interface GitConfigFile {
-    listRemotes: () => GitRemoteConfig[];
+    remotes: GitRemoteConfig[];
     getRemote: (remoteName: string) => GitRemoteConfig;
     resolveUpstream: (ref: BranchRef) => TrackingBranchRef;
 }

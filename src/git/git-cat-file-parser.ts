@@ -62,7 +62,7 @@ export class GitCatFileParser
 
         if (this.buffer) {
             const completeObject = `${this.header.trim()}\n${this.buffer.trim()}`;
-            console.log("X |" + completeObject + "|")
+            // console.log("X |" + completeObject + "|")
             const results = GitUtils.parseObjectDetailsList(completeObject);
             if (!results || results.length !== 1) {
                 throw error(`Unparseable result: '${results}'`);

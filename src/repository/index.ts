@@ -67,6 +67,7 @@ export interface BranchRefModel extends RefModel {
 
 export interface TrackingBranchRefModel extends RefModel {
     kind: "TRACKING";
+    remote: Promise<RemoteModel>;
     name: string;
 }
 
@@ -145,9 +146,11 @@ export interface RepositoryModel {
     lookupTag: (ref: TagRef, ifNotFound: IfNotFound) => Promise<TagRefModel>;
     lookupStash: (ref: StashRef, ifNotFound: IfNotFound) => Promise<StashRefModel>;
     buildRefDistance: (source: Ref, target: Ref, supplier: () => Promise<RefDistance>) => Promise<RefDistanceModel>;
+    allRemotes: Promise<Map<string, RemoteModel>>;
+    lookupRemote: (name: string, ifNotFound: IfNotFound) => Promise<RemoteModel>;
+    head: Promise<RefModel>;
     gitService: GitService;
     persistentCacheService: PersistentCacheService;
-    head: Promise<RefModel>;
     gitConfig: Promise<GitConfigFile>;
     lastFetchDate: Promise<number>;
     workingDirectory: Promise<WorkingDirectoryModel>;
@@ -172,4 +175,11 @@ export interface RefDistanceModel {
     behind: Promise<number>;
     mergeBaseId: Promise<string>;
     mergeBase: Promise<CommitModel>;
+}
+
+export interface RemoteModel {
+    repository: RepositoryModel;
+    name: string;
+    fetchUrl: Promise<string>;
+    pushUrls: Promise<string[]>;
 }

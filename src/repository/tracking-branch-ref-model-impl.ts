@@ -1,5 +1,5 @@
 import { TrackingBranchRef } from "src/git";
-import { CommitModel, RepositoryModel, TrackingBranchRefModel } from "src/repository";
+import { CommitModel, RemoteModel, RepositoryModel, TrackingBranchRefModel } from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
 
 export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
@@ -9,6 +9,8 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
     readonly kind = "TRACKING";
 
     private readonly _commit = lazyValue<CommitModel>();
+
+    private readonly _remote = lazyValue<RemoteModel>();
 
     constructor(readonly repository: RepositoryModel, readonly ref: TrackingBranchRef, private readonly _commitId: string) {
 
@@ -28,5 +30,9 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
 
     get commit() {
         return this._commit.fetch(() => this.repository.lookupCommit(this._commitId, 'throw'));
+    }
+
+    get remote() {
+        return this._remote.fetch(async () => this.repository.lookupRemote(this.ref.remote, 'throw'));
     }
 }
