@@ -193,7 +193,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Annotated tag not found: '${annotatedTagId}' for repo: '${this.path}'`)});
     }
 
-    async lookupBlob(blobId: string, ifNotFound: IfNotFound) {
+    async lookupBlob(blobId: string, ifNotFound: IfNotFound): Promise<BlobModel> {
         stringNotNullNotEmpty(blobId, "blobId");
         return if_not_found({
             value: ifNotFound,
@@ -201,7 +201,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Blob not found: '${blobId}' for repo: '${this.path}'`)});
     }
 
-    async lookupTree(treeId: string, ifNotFound: IfNotFound) {
+    async lookupTree(treeId: string, ifNotFound: IfNotFound): Promise<TreeModel> {
         stringNotNullNotEmpty(treeId, "treeId");
         return if_not_found({
             value: ifNotFound,
@@ -209,7 +209,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Tree not found: '${treeId}' for repo: '${this.path}'`)});
     }
 
-    async lookupRef(ref: Ref, ifNotFound: IfNotFound) {
+    async lookupRef(ref: Ref, ifNotFound: IfNotFound): Promise<RefModel> {
         notNull(ref, "ref");
         if (isBranchRef(ref)) {
             return this.lookupBranch(ref, ifNotFound);
@@ -225,7 +225,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         }
     }
 
-    async lookupBranch(ref: BranchRef, ifNotFound: IfNotFound) {
+    async lookupBranch(ref: BranchRef, ifNotFound: IfNotFound): Promise<BranchRefModel> {
         notNull(ref, "branchRef");
         return if_not_found({
             value: ifNotFound,
@@ -233,7 +233,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Branch not found: '${ref.refName}' for repo: '${this.path}'`)});
     }
 
-    async lookupTrackingBranch(ref: TrackingBranchRef, ifNotFound: IfNotFound) {
+    async lookupTrackingBranch(ref: TrackingBranchRef, ifNotFound: IfNotFound): Promise<TrackingBranchRefModel> {
         notNull(ref, "trackingRef");
         return if_not_found({
             value: ifNotFound,
@@ -241,7 +241,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Tracking branch not found: '${ref.refName}' for repo: '${this.path}'`)});
     }
 
-    async lookupTag(ref: TagRef, ifNotFound: IfNotFound) {
+    async lookupTag(ref: TagRef, ifNotFound: IfNotFound): Promise<TagRefModel> {
         notNull(ref, "tagRef");
         return if_not_found({
             value: ifNotFound,
@@ -249,7 +249,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Tag branch not found: '${ref.refName}' for repo: '${this.path}'`)});
     }
 
-    async lookupStash(ref: StashRef, ifNotFound: IfNotFound) {
+    async lookupStash(ref: StashRef, ifNotFound: IfNotFound): Promise<StashRefModel> {
         notNull(ref, "stashRef");
         return if_not_found({
             value: ifNotFound,
@@ -272,7 +272,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             .reduce(map_reducer(remote => remote.name), new Map<string, RemoteModel>()));
     }
 
-    async lookupRemote(name: string, ifNotFound: IfNotFound) {
+    async lookupRemote(name: string, ifNotFound: IfNotFound): Promise<RemoteModel> {
         stringNotNullNotEmpty(name, "name");
         return if_not_found({
             value: ifNotFound,
@@ -280,7 +280,7 @@ export class RepositoryModelImpl implements RepositoryModel {
             error: () => error(`Remote not found: '${name}' for repo: '${this.path}'`)});
     }
 
-    get head() {
+    get head(): Promise<RefModel> {
         return this._repoHead.fetch(async () => {
             const ref = await this.gitService.getRepoHead(this.path);
             if (!ref) {
@@ -295,25 +295,18 @@ export class RepositoryModelImpl implements RepositoryModel {
         return this._gitConfig.fetch(() => this.gitService.parseConfig(this.path));
     }
 
-    get lastFetchDate() {
+    get lastFetchDate(): Promise<number> {
         return this.gitService.getLastFetchDate(this.path);
     }
 
-    get workingDirectory() {
+    get workingDirectory(): Promise<WorkingDirectoryModel> {
         return this._cachedWorkingDirectories.fetch(this.path, async path => new WorkingDirectoryModelImpl(this, path));
     }
 
     get webUrls(): Promise<WebUrlModel[]> {
-        return this._webUrls.fetch(async () => {
-
-            const results: WebUrlModel[] = await Promise.all((await map_values(this.allRemotes))
-                .map(async remote => {
-                    const url = await (await remote.webUrlHandler).repositoryUrl;
-                    return ({remote, url});
-                }));
-
-            // Only return results with a valid URL
-            return results.filter(result => !! result.url);
-        })
+        return this._webUrls.fetch(async () => map_values(this.allRemotes).then(remotes => Promise.all(remotes.map(async remote => {
+            const url = (await (await remote.webUrlHandler)).repositoryUrl;
+            return ({ remote, url });
+        }))).then(results => results.filter(result => !! result.url)));
     }
 }

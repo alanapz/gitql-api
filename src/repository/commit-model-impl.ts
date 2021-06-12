@@ -152,16 +152,9 @@ export class CommitModelImpl implements CommitModel {
     }
 
     get webUrls(): Promise<WebUrlModel[]> {
-        return this._webUrls.fetch(async () => {
-
-            const results: WebUrlModel[] = await Promise.all((await map_values(this.repository.allRemotes))
-                .map(async remote => {
-                    const url = await (await remote.webUrlHandler).commitUrl(this);
-                    return ({remote, url});
-                }));
-
-            // Only return results with a valid URL
-            return results.filter(result => !! result.url);
-        })
+        return this._webUrls.fetch(async () => map_values(this.repository.allRemotes).then(remotes => Promise.all(remotes.map(async remote => {
+            const url = (await (await remote.webUrlHandler)).commitUrl(this);
+            return ({ remote, url });
+        }))).then(results => results.filter(result => !! result.url)));
     }
 }

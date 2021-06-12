@@ -80,6 +80,7 @@ export interface TagRefModel extends RefModel {
     name: string;
     message: Promise<string>;
     author: Promise<GitPrincipal>;
+    webUrls: Promise<WebUrlModel[]>;
 }
 
 export interface StashRefModel extends RefModel {
