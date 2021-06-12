@@ -10,6 +10,7 @@ import { MutationResolver } from "src/resolver/mutation-resolver";
 import { PrincipalResolver } from "src/resolver/principal-resolver";
 import { QueryResolver } from "src/resolver/query-resolver";
 import { RefDistanceResolver } from "src/resolver/ref-distance-resolver";
+import { RemoteResolver } from "src/resolver/remote-resolver";
 import { RepositoryResolver } from "src/resolver/repository-resolver";
 import { RepositoryResolverMutator } from "src/resolver/repository-resolver-mutator";
 import { StashRefResolver } from "src/resolver/stash-ref-resolver";
@@ -32,6 +33,7 @@ import { WorkingDirectoryResolver } from "src/resolver/working-directory-resolve
       CommitResolver,
       PrincipalResolver,
       RefDistanceResolver,
+      RemoteResolver,
       RepositoryResolver,
       RepositoryResolverMutator,
       StashRefResolver,

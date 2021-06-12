@@ -90,8 +90,9 @@ type GitRefDistance {
 }
 
 type GitRemote {
+    repository: GitRepository!
     name: String!
-    fetchUrl: [String!]!
+    fetchUrl: String!
     pushUrls: [String!]!
 }
 
@@ -108,7 +109,8 @@ type GitRepository {
     trackingBranch(name: String!): GitTrackingBranch
     stashes: [GitStash!]!
     stash(name: String!): GitStash
-    #remotes: [GitRef!]!
+    remotes: [GitRemote!]!
+    remote(name: String!): GitRemote
     lastFetchDate: Int
     head: GitRef
     workingDirectory: GitWorkingDirectory

@@ -14,7 +14,6 @@ export class PersistentCacheService {
     }
 
     isReachableBy(commitId: string, refHeadId: string, supplier: () => Promise<boolean>): Promise<boolean> {
-        //console.log(this._commitReachability);
         return this._commitReachability.fetch(`${commitId}_${refHeadId}`, supplier);
     }
 }
