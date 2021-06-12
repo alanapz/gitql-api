@@ -4,6 +4,8 @@ import { BranchRef, GitPrincipal, Ref, RefDistance, StashRef, TagRef, TrackingBr
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitService } from "src/git/git.service";
 import { IfNotFound } from "src/utils/utils";
+import { WebUrlHandler } from "src/weburl";
+import { WebUrlService } from "src/weburl/web-url.service";
 
 export interface AnnotatedTagModel {
     id: string;
@@ -41,7 +43,7 @@ export interface CommitModel {
     reachableBy: Promise<RefModel[]>;
     ancestors: Promise<CommitModel[]>;
     allAncestors: Promise<CommitModel[]>;
-    webUrl: Promise<string>;
+    webUrls: Promise<WebUrlModel[]>;
 }
 
 export interface TreeModel {
@@ -70,8 +72,7 @@ export interface TrackingBranchRefModel extends RefModel {
     kind: "TRACKING";
     remote: Promise<RemoteModel>;
     name: string;
-    isTrunk: Promise<boolean>
-    webUrl: Promise<string>
+    webUrl: Promise<WebUrlModel>;
 }
 
 export interface TagRefModel extends RefModel {
@@ -156,12 +157,13 @@ export interface RepositoryModel {
     allRemotes: Promise<Map<string, RemoteModel>>;
     lookupRemote: (name: string, ifNotFound: IfNotFound) => Promise<RemoteModel>;
     head: Promise<RefModel>;
-    gitService: GitService;
-    persistentCacheService: PersistentCacheService;
-    gitConfig: Promise<GitConfigFile>;
     lastFetchDate: Promise<number>;
+    gitConfig: Promise<GitConfigFile>;
     workingDirectory: Promise<WorkingDirectoryModel>;
-    webUrl: Promise<string>;
+    webUrls: Promise<WebUrlModel[]>;
+    gitService: GitService;
+    webUrlService: WebUrlService;
+    cacheService: PersistentCacheService;
 }
 
 export interface WorkingDirectoryModel {
@@ -190,4 +192,10 @@ export interface RemoteModel {
     name: string;
     fetchUrl: Promise<string>;
     pushUrls: Promise<string[]>;
+    webUrlHandler: Promise<WebUrlHandler>;
+}
+
+export interface WebUrlModel {
+    remote: RemoteModel,
+    url: string;
 }

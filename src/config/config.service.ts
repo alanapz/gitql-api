@@ -10,15 +10,15 @@ export class ConfigService {
         this._repoRoot = stringNotNullNotEmpty(process.env["GQL_ROOT"], "'GQL_ROOT' not defined");
     }
 
-    get repoRoot() {
+    get repoRoot(): string {
         return this._repoRoot;
     }
 
-    get maxSearchDepth() {
+    get maxSearchDepth(): number {
         return 2;
     }
 
-    isPathSkipped(value: string) {
-        return value.indexOf("node_modules") !== -1;
+    isPathSkipped(value: string): boolean {
+        return value.includes("node_modules");
     }
 }

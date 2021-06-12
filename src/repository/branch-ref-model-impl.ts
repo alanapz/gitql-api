@@ -16,26 +16,26 @@ export class BranchRefModelImpl implements BranchRefModel {
 
     }
 
-    get displayName() {
+    get displayName(): string {
         return this.name;
     }
 
-    get name() {
+    get name(): string {
         return this.ref.name;
     }
 
-    get commitId() {
+    get commitId(): Promise<string> {
         return Promise.resolve(this._commitId);
     }
 
-    get commit() {
+    get commit(): Promise<CommitModel> {
         return this._commit.fetch(() => this.repository.lookupCommit(this._commitId, 'throw'));
     }
 
-    get upstream() {
+    get upstream(): Promise<TrackingBranchRefModel> {
         return this._upstream.fetch(async () => {
             const upstream = (await this.repository.gitConfig).resolveUpstream(this.ref);
-            return (upstream ? this.repository.lookupTrackingBranch(upstream, 'null') : null);
+            return (upstream && this.repository.lookupTrackingBranch(upstream, 'null'));
         });
     }
 }

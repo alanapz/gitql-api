@@ -1,5 +1,5 @@
 import { TrackingBranchRef } from "src/git";
-import { CommitModel, RemoteModel, RepositoryModel, TrackingBranchRefModel } from "src/repository";
+import { CommitModel, RemoteModel, RepositoryModel, TrackingBranchRefModel, WebUrlModel } from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
 
 export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
@@ -10,48 +10,39 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
 
     private readonly _commit = lazyValue<CommitModel>();
 
-<<<<<<< HEAD
     private readonly _remote = lazyValue<RemoteModel>();
-=======
-    private readonly _isTrunk = lazyValue<boolean>();
 
-    private readonly _webUrl = lazyValue<string>();
->>>>>>> GQL14 - Add provider config support
+    private readonly _webUrl = lazyValue<WebUrlModel>();
 
     constructor(readonly repository: RepositoryModel, readonly ref: TrackingBranchRef, private readonly _commitId: string) {
 
     }
 
-    get displayName() {
-        return this.name;
-    }
-
-    get name() {
+    get displayName(): string {
         return `${this.ref.remote}/${this.ref.name}`;
     }
 
-    get commitId() {
+    get name(): string {
+        return this.ref.name;
+    }
+
+    get commitId(): Promise<string> {
         return Promise.resolve(this._commitId);
     }
 
-    get commit() {
+    get commit(): Promise<CommitModel> {
         return this._commit.fetch(() => this.repository.lookupCommit(this._commitId, 'throw'));
     }
 
-<<<<<<< HEAD
-    get remote() {
+    get remote(): Promise<RemoteModel> {
         return this._remote.fetch(async () => this.repository.lookupRemote(this.ref.remote, 'throw'));
-=======
-    get isTrunk() {
-        return this._isTrunk.fetch(() => {
-
-        });
     }
 
-    get webUrl() {
-        return this._isTrunk.fetch(() => {
-
+    get webUrl(): Promise<WebUrlModel> {
+        return this._webUrl.fetch(async () => {
+            const remote = await this.remote;
+            const url = (await remote.webUrlHandler).refUrl(this);
+            return url && ({remote, url});
         });
->>>>>>> GQL14 - Add provider config support
     }
 }

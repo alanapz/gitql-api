@@ -5,6 +5,7 @@ import { ConfigService } from "src/config/config.service";
 import { GitService } from "src/git/git.service";
 import { RepositoryModel } from "src/repository";
 import { RepositoryModelImpl } from "src/repository/repository-model-impl";
+import { WebUrlService } from "src/weburl/web-url.service";
 
 @Injectable()
 export class RepositoryService {
@@ -12,7 +13,8 @@ export class RepositoryService {
     constructor(
         private readonly configService: ConfigService,
         private readonly gitService: GitService,
-        private readonly persistentCacheService: PersistentCacheService) {
+        private readonly webUrlService: WebUrlService,
+        private readonly cacheService: PersistentCacheService) {
     }
 
     async openRepository(fullPath: string): Promise<RepositoryModel> {
@@ -22,6 +24,6 @@ export class RepositoryService {
             throw error(`Folder is not a valid Git repository: '${fullPath}'`);
         }
 
-        return new RepositoryModelImpl(fullPath, this.gitService, this.persistentCacheService);
+        return new RepositoryModelImpl(fullPath, this.gitService, this.webUrlService, this.cacheService);
     }
 }

@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { WebUrlService } from "src/weburl/weburl.service";
+import { WebUrlService } from "src/weburl/web-url.service";
 
 @Module({
     providers: [WebUrlService],

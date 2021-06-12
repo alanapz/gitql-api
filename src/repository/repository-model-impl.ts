@@ -31,6 +31,7 @@ import {
     TagRefModel,
     TrackingBranchRefModel,
     TreeModel,
+    WebUrlModel,
     WorkingDirectoryModel
 } from "src/repository";
 import { AnnotatedTagModelImpl } from "src/repository/annotated-tag-model-impl";
@@ -48,6 +49,7 @@ import { WorkingDirectoryModelImpl } from "src/repository/working-directory-mode
 import { asyncMap } from "src/utils/async-map";
 import { lazyValue } from "src/utils/lazy-value";
 import { as, if_not_found, IfNotFound, map_reducer, map_values } from "src/utils/utils";
+import { WebUrlService } from "src/weburl/web-url.service";
 
 export class RepositoryModelImpl implements RepositoryModel {
 
@@ -62,6 +64,8 @@ export class RepositoryModelImpl implements RepositoryModel {
 
     private readonly _allRemotes = lazyValue<Map<string, RemoteModel>>();
 
+    private readonly _webUrls = lazyValue<WebUrlModel[]>();
+
     private readonly _repoHead = lazyValue<RefModel>();
     private readonly _gitConfig = lazyValue<GitConfigFile>();
 
@@ -70,7 +74,10 @@ export class RepositoryModelImpl implements RepositoryModel {
     private readonly _cachedRefDistances = asyncMap<string, RefDistanceModel>();
     private readonly _cachedWorkingDirectories = asyncMap<string, WorkingDirectoryModel>();
 
-    constructor(public readonly path: string, public readonly gitService: GitService, public readonly persistentCacheService: PersistentCacheService) {
+    constructor(public readonly path: string,
+                public readonly gitService: GitService,
+                public readonly webUrlService: WebUrlService,
+                public readonly cacheService: PersistentCacheService) {
         stringNotNullNotEmpty(path, 'path');
     }
 
@@ -145,9 +152,9 @@ export class RepositoryModelImpl implements RepositoryModel {
         });
     }
 
-    get allReachableCommits() {
+    get allReachableCommits(): Promise<Map<string, CommitModel>> {
         return this._allReachableCommits.fetch(async () => Array.from(await this.gitService.listAllCommits(this.path))
-            .map(result => as<CommitModel>(new CommitModelImpl(this, result)))
+            .map(result => as<CommitModel>(new CommitModelImpl(this, result))) // Don't ask me why need explicit cast
             .reduce(map_reducer(commit => commit.id), new Map<string, CommitModel>()));
     }
 
@@ -259,10 +266,10 @@ export class RepositoryModelImpl implements RepositoryModel {
         });
     }
 
-    get allRemotes() {
+    get allRemotes(): Promise<Map<string, RemoteModel>> {
         return this._allRemotes.fetch(async () => (await this.gitConfig).remotes
-            .map(remoteConfig => new RemoteModelImpl(this, remoteConfig.name, remoteConfig))
-            .reduce(map_reducer<string, RemoteModel>(remote => remote.name), new Map<string, RemoteModel>()));
+            .map(remoteConfig => as<RemoteModel>(new RemoteModelImpl(this, remoteConfig.name, remoteConfig)))
+            .reduce(map_reducer(remote => remote.name), new Map<string, RemoteModel>()));
     }
 
     async lookupRemote(name: string, ifNotFound: IfNotFound) {
@@ -280,16 +287,7 @@ export class RepositoryModelImpl implements RepositoryModel {
                 // Detached head
                 return null;
             }
-<<<<<<< HEAD
-
-            if (isTrackingBranchRef(ref)) {
-                return this.lookupTrackingBranch(ref, 'throw');
-            }
-
-            throw error(`Unparseable head ref: '${ref.refName}' for repo: '${this.path}'`);
-=======
             return this.lookupRef(ref, 'throw');
->>>>>>> GQL13 - Improve stash support and bulk commit fetching
         });
     }
 
@@ -303,5 +301,19 @@ export class RepositoryModelImpl implements RepositoryModel {
 
     get workingDirectory() {
         return this._cachedWorkingDirectories.fetch(this.path, async path => new WorkingDirectoryModelImpl(this, path));
+    }
+
+    get webUrls(): Promise<WebUrlModel[]> {
+        return this._webUrls.fetch(async () => {
+
+            const results: WebUrlModel[] = await Promise.all((await map_values(this.allRemotes))
+                .map(async remote => {
+                    const url = await (await remote.webUrlHandler).repositoryUrl;
+                    return ({remote, url});
+                }));
+
+            // Only return results with a valid URL
+            return results.filter(result => !! result.url);
+        })
     }
 }
