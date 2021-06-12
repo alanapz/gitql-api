@@ -7,6 +7,7 @@ import { RepositoryModel } from "src/repository";
 import { RepositoryModelImpl } from "src/repository/repository-model-impl";
 import { RepositoryService } from "src/repository/repository.service";
 import { ioUtils } from "src/utils/io-utils";
+import { WebUrlService } from "src/weburl/web-url.service";
 
 const fs = require("fs/promises");
 const path = require("path");
@@ -15,9 +16,10 @@ const path = require("path");
 export class QueryResolver {
 
     constructor(
-        private readonly gitService: GitService,
         private readonly configService: ConfigService,
-        private readonly persistentCacheService: PersistentCacheService,
+        private readonly gitService: GitService,
+        private readonly webUrlService: WebUrlService,
+        private readonly cacheService: PersistentCacheService,
         private readonly repoService: RepositoryService) {
     }
 
@@ -53,7 +55,7 @@ export class QueryResolver {
             }
 
             if (await this.gitService.isGitRepoPath(filePath)) {
-                repositories.push(new RepositoryModelImpl(filePath, this.gitService, this.persistentCacheService));
+                repositories.push(new RepositoryModelImpl(filePath, this.gitService, this.webUrlService, this.cacheService));
                 continue;
             }
 

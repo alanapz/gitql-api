@@ -13,6 +13,7 @@ import {
     StashRefModel,
     TrackingBranchRefModel,
     TreeModel,
+    WebUrlModel,
     WorkingDirectoryModel
 } from "src/repository";
 import { map_values } from "src/utils/utils";
@@ -131,9 +132,9 @@ export class RepositoryResolver {
         return model.workingDirectory;
     }
 
-    @ResolveField("webUrl")
-    getWebUrl(@Parent() model: RepositoryModel): Promise<string> {
-        return model.webUrl;
+    @ResolveField("webUrls")
+    getWebUrls(@Parent() model: RepositoryModel): Promise<WebUrlModel[]> {
+        return model.webUrls;
     }
 }
 

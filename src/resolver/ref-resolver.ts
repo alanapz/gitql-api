@@ -54,7 +54,7 @@ export abstract class RefResolver {
                 return null;
             }
 
-            return repository.persistentCacheService.lookupRefDistance(sourceCommitId, targetCommitId, async () => {
+            return repository.cacheService.lookupRefDistance(sourceCommitId, targetCommitId, async () => {
 
                 const lookupFirstParent = async (commitId: string) => {
                     const firstParent = (await (await repository.lookupCommit(commitId, 'throw')).firstParent);

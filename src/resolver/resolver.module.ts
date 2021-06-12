@@ -20,11 +20,13 @@ import { TreeDescendantResolver } from "src/resolver/tree-descendant-resolver";
 import { TreeItemBlobResolver } from "src/resolver/tree-item-blob-resolver";
 import { TreeItemSubtreeResolver } from "src/resolver/tree-item-subtree-resolver";
 import { TreeResolver } from "src/resolver/tree-resolver";
+import { WebUrlResolver } from "src/resolver/web-url-resolver";
 import { WorkingDirectoryItemResolver } from "src/resolver/working-directory-item-resolver";
 import { WorkingDirectoryResolver } from "src/resolver/working-directory-resolver";
+import { WebUrlModule } from "src/weburl/web-url.module";
 
 @Module({
-  imports: [ConfigModule, GitModule, PersistentCacheModule, RepositoryModule],
+  imports: [ConfigModule, WebUrlModule, GitModule, PersistentCacheModule, RepositoryModule],
   providers: [
       QueryResolver,
       MutationResolver,
@@ -43,6 +45,7 @@ import { WorkingDirectoryResolver } from "src/resolver/working-directory-resolve
       TreeResolver,
       TreeItemBlobResolver,
       TreeItemSubtreeResolver,
+      WebUrlResolver,
       WorkingDirectoryResolver,
       WorkingDirectoryItemResolver
   ],
