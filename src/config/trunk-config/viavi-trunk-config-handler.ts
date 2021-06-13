@@ -1,66 +1,25 @@
-/*
-import {
-    CommitModel,
-    isTagRefModel,
-    isTrackingBranchRefModel,
-    TagRefModel,
-    TrackingBranchRefModel
-} from "src/repository";
-import { WebUrlHandler } from "src/weburl";
-export class BitbucketWebUrlHandler implements WebUrlHandler {
+import { TrunkConfigHandler } from "src/config/trunk-config/index";
+import { TrackingBranchRef } from "src/git";
+import { GitUtils } from "src/git/utils";
 
-    private constructor(private readonly server: string, private readonly project: string, private readonly repo: string) {
+export class ViaviTrunkConfigHandler implements TrunkConfigHandler {
 
+    isTrunk(ref: TrackingBranchRef): Promise<boolean> {
+        return Promise.resolve(ref.name === 'main' || !! ref.name.match("^[a-z]{2,}\d{4}$"));
     }
 
-    isTrunk(branchName: string): Promise<boolean> {
-        return Promise.resolve(branchName === 'main' || branchName === 'default' || !! branchName.match("^[a-z]{2,}\d{4}$"));
-    }
+    async resolveParent(ref: TrackingBranchRef): Promise<TrackingBranchRef> {
 
-    resolveParent(branchName: string): Promise<string> {
-        const matcher = ref.name.match("^(feature|hotfix)/(?<trunk>[a-z]{2,}\d{4))/.+$")
-        return Promise.resolve(matcher && matcher.groups["trunk"]);
-    }
-
-    get repositoryUrl() {
-        // eg: https://cosgit1.ds.jdsu.net/projects/ONMSI/repos/aaa-service/browse
-        return `https://${this.server}/projects/${this.project}/repos/${this.repo}/browse`;
-    }
-
-    get activityUrl() {
-        // eg: https://cosgit1.ds.jdsu.net/plugins/servlet/rss4stash/repo-activities/ONMSI/aaa-service
-        return `https://${this.server}/plugins/servlet/rss4stash/repo-activities/${this.project}/${this.repo}`;
-    }
-
-    refUrl(ref: TrackingBranchRefModel|TagRefModel) {
-        // eg: https://cosgit1.ds.jdsu.net/projects/ONMSI/repos/aaa-service/commits?until=refs%2Fheads%2Ffeature%2FONMSI-7482-ept-7761-btor-aaa-add-the-accounting-part
-        if (isTrackingBranchRefModel(ref)) {
-            return `https://${this.server}/projects/${this.project}/repos/${this.repo}/commits?until=refs%2Fheads%2F${encodeURIComponent(ref.name)}`;
-        }
-        else if (isTagRefModel(ref)) {
-            return `https://${this.server}/projects/${this.project}/repos/${this.repo}/commits?until=refs%2Ftags%2F${encodeURIComponent(ref.name)}`;
-        }
-        else {
+        if (await this.isTrunk(ref)) {
             return null;
         }
-    }
 
-    commitUrl(commit: CommitModel) {
-        // eg: https://cosgit1.ds.jdsu.net/projects/ONMSI/repos/aaa-service/commits/1b1855676308e67d18b9f2999e63b6da8c93a7d7
-        return `https://${this.server}/projects/${this.project}/repos/${this.repo}/commits/${commit.id}`;
-    }
+        const matcher = ref.name.match("^(feature|hotfix)/(?<trunk>[a-z]{2,}\d{4))/.+$");
 
-    public static matches(url: string): WebUrlHandler {
-
-        // ssh://git@cosgit1.ds.jdsu.net:7999/onmsi/topaz-app.git
-        const sshMatcher = url.match("^ssh://.+@(?<server>.+)(:\d)?/(?<project>.+)/(?<repo>.+).git$");
-        if (sshMatcher) {
-            return new BitbucketWebUrlHandler(
-                sshMatcher.groups["server"],
-                sshMatcher.groups["project"],
-                sshMatcher.groups["repo"]);
+        if (!matcher) {
+            return null;
         }
 
-        return null;
+        return GitUtils.toTrackingBranchRef(`${ref.remote}/${matcher.groups["trunk"]}`);
     }
-}*/
+}

@@ -12,8 +12,6 @@ export class BranchRefModelImpl implements BranchRefModel {
 
     private readonly _upstream = lazyValue<TrackingBranchRefModel>();
 
-    private readonly _parent = lazyValue<TrackingBranchRefModel>();
-
     constructor(readonly repository: RepositoryModel, readonly ref: BranchRef, private readonly _commitId: string) {
 
     }
@@ -39,9 +37,5 @@ export class BranchRefModelImpl implements BranchRefModel {
             const upstream = (await this.repository.gitConfig).resolveUpstream(this.ref);
             return (upstream && this.repository.lookupTrackingBranch(upstream, 'null'));
         });
-    }
-
-    get parent(): Promise<TrackingBranchRefModel> {
-        return this._parent.fetch(async () => (await this.repository.trunkConfigHandler).resolveParent(this));
     }
 }

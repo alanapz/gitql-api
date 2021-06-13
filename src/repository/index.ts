@@ -67,7 +67,6 @@ export interface BranchRefModel extends RefModel {
     kind: "BRANCH";
     name: string;
     upstream: Promise<TrackingBranchRefModel>;
-    parent: Promise<TrackingBranchRefModel>;
 }
 
 export interface TrackingBranchRefModel extends RefModel {

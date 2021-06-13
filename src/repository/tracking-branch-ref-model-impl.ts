@@ -43,11 +43,14 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
     }
 
     get isTrunk(): Promise<boolean> {
-        return this._isTrunk.fetch(async () => (await this.repository.trunkConfigHandler).isTrunk(this));
+        return this._isTrunk.fetch(async () => (await this.repository.trunkConfigHandler).isTrunk(this.ref));
     }
 
     get parent(): Promise<TrackingBranchRefModel> {
-        return this._parent.fetch(async () => (await this.repository.trunkConfigHandler).resolveParent(this));
+        return this._parent.fetch(async () => {
+            const parentRef = await (await this.repository.trunkConfigHandler).resolveParent(this.ref);
+            return (parentRef && this.repository.lookupTrackingBranch(parentRef, 'throw'));
+        });
     }
 
     get webUrl(): Promise<WebUrlModel> {
