@@ -25,6 +25,11 @@ export class QueryResolver {
         private readonly repoService: RepositoryService) {
     }
 
+    @Query("config")
+    getConfig(): Promise<unknown> {
+        return Promise.resolve({});
+    }
+
     @Query("repository")
     async openRepository(@Args("path") relativePath: string): Promise<RepositoryModel> {
         stringNotNullNotEmpty(relativePath, "relativePath");

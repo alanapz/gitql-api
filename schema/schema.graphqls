@@ -16,8 +16,13 @@ input GitBranchFilter {
 }
 
 type Query {
+    config: GQLConfig!
     repository(path: String!): GitRepository!
     searchRepositories(startingPath: String): [GitRepository!]!
+}
+
+type GQLConfig {
+    repoRoot: String!
 }
 
 type GitBlob implements GitObject {

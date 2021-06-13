@@ -6,6 +6,7 @@ import { RepositoryModule } from "src/repository/repository.module";
 import { BlobResolver } from "src/resolver/blob-resolver";
 import { BranchRefResolver } from "src/resolver/branch-ref-resolver";
 import { CommitResolver } from "src/resolver/commit-resolver";
+import { ConfigResolver } from "src/resolver/config-resolver";
 import { MutationResolver } from "src/resolver/mutation-resolver";
 import { PrincipalResolver } from "src/resolver/principal-resolver";
 import { QueryResolver } from "src/resolver/query-resolver";
@@ -32,6 +33,7 @@ import { WorkingDirectoryResolver } from "src/resolver/working-directory-resolve
       BlobResolver,
       BranchRefResolver,
       CommitResolver,
+      ConfigResolver,
       PrincipalResolver,
       RefDistanceResolver,
       RemoteResolver,
