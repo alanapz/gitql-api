@@ -1,5 +1,5 @@
+import { WebUrlHandler } from "src/config/web-url";
 import { CommitModel, isTrackingBranchRefModel, TagRefModel, TrackingBranchRefModel } from "src/repository";
-import { WebUrlHandler } from "src/weburl";
 
 export class GithubWebUrlHandler implements WebUrlHandler {
 

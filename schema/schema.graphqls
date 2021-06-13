@@ -157,6 +157,9 @@ type GitTag implements GitRef {
 type GitTrackingBranch implements GitRef {
     remote: GitRemote!
     branchName: String!
+    isTrunk: Boolean!
+    parent: GitTrackingBranch
+    parentDistance: GitRefDistance
     webUrl: GitWebUrl
     # Inherited from GitRef
     refName: String!

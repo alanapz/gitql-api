@@ -1,5 +1,8 @@
 import { PersistentCacheService } from "src/cache/persistent-cache.service";
 import { error, notNull, stringNotNullNotEmpty } from "src/check";
+import { TrunkConfigHandler } from "src/config/trunk-config";
+import { TrunkConfigService } from "src/config/trunk-config/trunk-config.service";
+import { WebUrlService } from "src/config/web-url/web-url.service";
 import {
     BranchRef,
     GitPrincipal,
@@ -49,7 +52,6 @@ import { WorkingDirectoryModelImpl } from "src/repository/working-directory-mode
 import { asyncMap } from "src/utils/async-map";
 import { lazyValue } from "src/utils/lazy-value";
 import { as, if_not_found, IfNotFound, map_reducer, map_values } from "src/utils/utils";
-import { WebUrlService } from "src/weburl/web-url.service";
 
 export class RepositoryModelImpl implements RepositoryModel {
 
@@ -65,6 +67,7 @@ export class RepositoryModelImpl implements RepositoryModel {
     private readonly _allRemotes = lazyValue<Map<string, RemoteModel>>();
 
     private readonly _webUrls = lazyValue<WebUrlModel[]>();
+    private readonly _trunkConfigHandler = lazyValue<TrunkConfigHandler>();
 
     private readonly _repoHead = lazyValue<RefModel>();
     private readonly _gitConfig = lazyValue<GitConfigFile>();
@@ -77,6 +80,7 @@ export class RepositoryModelImpl implements RepositoryModel {
     constructor(public readonly path: string,
                 public readonly gitService: GitService,
                 public readonly webUrlService: WebUrlService,
+                public readonly trunkConfigService: TrunkConfigService,
                 public readonly cacheService: PersistentCacheService) {
         stringNotNullNotEmpty(path, 'path');
     }
@@ -262,7 +266,7 @@ export class RepositoryModelImpl implements RepositoryModel {
         // (We do this as ref distance is expensive and refs are immutable)
         return this._cachedRefDistances.fetch(`${source.refName}_${target.refName}`, async () => {
             const result = await supplier();
-            return new RefDistanceModelImpl(this, source, target, result.ahead, result.behind, result.mergeBaseId);
+            return (result && new RefDistanceModelImpl(this, source, target, result.ahead, result.behind, result.mergeBaseId));
         });
     }
 
@@ -308,5 +312,9 @@ export class RepositoryModelImpl implements RepositoryModel {
             const url = (await (await remote.webUrlHandler)).repositoryUrl;
             return ({ remote, url });
         }))).then(results => results.filter(result => !! result.url)));
+    }
+
+    get trunkConfigHandler(): Promise<TrunkConfigHandler> {
+        return this._trunkConfigHandler.fetch(() => this.trunkConfigService.buildTrunkConfigHandler(this));
     }
 }

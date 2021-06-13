@@ -1,3 +1,4 @@
+import { WebUrlHandler } from "src/config/web-url";
 import {
     CommitModel,
     isTagRefModel,
@@ -5,7 +6,6 @@ import {
     TagRefModel,
     TrackingBranchRefModel
 } from "src/repository";
-import { WebUrlHandler } from "src/weburl";
 
 export class BitbucketWebUrlHandler implements WebUrlHandler {
 

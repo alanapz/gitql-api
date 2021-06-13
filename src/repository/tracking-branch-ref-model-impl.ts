@@ -12,6 +12,10 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
 
     private readonly _remote = lazyValue<RemoteModel>();
 
+    private readonly _isTrunk = lazyValue<boolean>();
+
+    private readonly _parent = lazyValue<TrackingBranchRefModel>();
+
     private readonly _webUrl = lazyValue<WebUrlModel>();
 
     constructor(readonly repository: RepositoryModel, readonly ref: TrackingBranchRef, private readonly _commitId: string) {
@@ -36,6 +40,14 @@ export class TrackingBranchRefModelImpl implements TrackingBranchRefModel {
 
     get remote(): Promise<RemoteModel> {
         return this._remote.fetch(async () => this.repository.lookupRemote(this.ref.remote, 'throw'));
+    }
+
+    get isTrunk(): Promise<boolean> {
+        return this._isTrunk.fetch(async () => (await this.repository.trunkConfigHandler).isTrunk(this));
+    }
+
+    get parent(): Promise<TrackingBranchRefModel> {
+        return this._parent.fetch(async () => (await this.repository.trunkConfigHandler).resolveParent(this));
     }
 
     get webUrl(): Promise<WebUrlModel> {
