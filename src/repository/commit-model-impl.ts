@@ -1,7 +1,15 @@
 import { error } from "src/check";
 import { GitPrincipal } from "src/git";
 import { GitLogLine } from "src/git/types";
-import { CommitModel, RefModel, RepositoryModel, TreeModel, WebUrlModel } from "src/repository";
+import {
+    CommitModel,
+    isTrackingBranchRefModel,
+    RefModel,
+    RepositoryModel,
+    TrackingBranchRefModel,
+    TreeModel,
+    WebUrlModel
+} from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
 import { map_values } from "src/utils/utils";
 
@@ -152,9 +160,21 @@ export class CommitModelImpl implements CommitModel {
     }
 
     get webUrls(): Promise<WebUrlModel[]> {
-        return this._webUrls.fetch(async () => map_values(this.repository.allRemotes).then(remotes => Promise.all(remotes.map(async remote => {
-            const url = (await (await remote.webUrlHandler)).commitUrl(this);
-            return ({ remote, url });
-        }))).then(results => results.filter(result => !! result.url)));
+        return this._webUrls.fetch(async () => {
+
+            const allRemotes = await map_values(this.repository.allRemotes);
+
+            // First lookup list of remotes this commit is reachable by
+            const reachableRemotes = await Promise.all((await this.reachableBy).filter(ref => isTrackingBranchRefModel(ref)).map(trackingRef => (trackingRef as TrackingBranchRefModel).remote));
+
+            const results = await Promise.all(allRemotes
+                .filter(remote => reachableRemotes.includes(remote))
+                .map(async remote => {
+                    const url = (await (await remote.webUrlHandler)).commitUrl(this);
+                    return ({remote, url});
+                }));
+
+            return results.filter(result => result && result.url);
+        })
     }
 }
