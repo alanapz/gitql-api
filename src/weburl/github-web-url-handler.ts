@@ -19,7 +19,7 @@ export class GithubWebUrlHandler implements WebUrlHandler {
     refUrl(ref: TrackingBranchRefModel|TagRefModel) {
         // eg: https://github.com/alanapz/gitql-api/tree/feature/GQL14-web-url-support
         if (isTrackingBranchRefModel(ref)) {
-            return `https://github.com/${this.user}/${this.user}/tree/${ref.name}`;
+            return `https://github.com/${this.user}/${this.project}/tree/${ref.name}`;
         }
         return null;
     }
