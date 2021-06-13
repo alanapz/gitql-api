@@ -1,8 +1,8 @@
 import { arrayNotNullNotEmpty, stringNotNullNotEmpty } from "src/check";
+import { WebUrlHandler } from "src/config/web-url";
 import { GitRemoteConfig } from "src/git/git-config-file";
 import { RemoteModel, RepositoryModel } from "src/repository";
 import { lazyValue } from "src/utils/lazy-value";
-import { WebUrlHandler } from "src/weburl";
 
 export class RemoteModelImpl implements RemoteModel {
 

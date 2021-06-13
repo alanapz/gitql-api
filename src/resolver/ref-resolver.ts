@@ -1,8 +1,8 @@
 import { Args, Parent, ResolveField } from "@nestjs/graphql";
 import { stringNotNullNotEmpty } from "src/check";
-import { Ref } from "src/git";
 import { GitUtils } from "src/git/utils";
 import { CommitModel, RefDistanceModel, RefModel, RepositoryModel } from "src/repository";
+import { RepositoryUtils } from "src/repository/repository-utils";
 
 export abstract class RefResolver {
 
@@ -38,40 +38,6 @@ export abstract class RefResolver {
     @ResolveField("distance")
     async getDistance(@Parent() model: RefModel, @Args('refName') refName: string): Promise<RefDistanceModel> {
         stringNotNullNotEmpty(refName, "refName");
-        return this.calculateDistance(model.repository, model.ref, GitUtils.parseExplicitRef(refName));
-    }
-
-    protected async calculateDistance(repository: RepositoryModel, source: Ref, target: Ref): Promise<RefDistanceModel> {
-
-        return repository.buildRefDistance(source, target, async () => {
-
-            const [sourceCommitId, targetCommitId] = await Promise.all([
-                (await repository.lookupRef(source, 'throw')).commitId,
-                (await repository.lookupRef(target, 'throw')).commitId
-            ]);
-
-            if (!sourceCommitId || !targetCommitId) {
-                return null;
-            }
-
-            return repository.cacheService.lookupRefDistance(sourceCommitId, targetCommitId, async () => {
-
-                const lookupFirstParent = async (commitId: string) => {
-                    const firstParent = (await (await repository.lookupCommit(commitId, 'throw')).firstParent);
-                    return (firstParent && firstParent.id);
-                };
-
-                const distance = await repository.gitService.calculateDistance(repository.path, sourceCommitId, targetCommitId, lookupFirstParent);
-
-                if (!distance) {
-                    return null;
-                }
-
-                return {
-                    ahead: distance.ahead,
-                    behind: distance.behind,
-                    mergeBaseId: distance.mergeBase};
-            });
-        });
+        return RepositoryUtils.calculateDistance(model.repository, model.ref, GitUtils.parseExplicitRef(refName));
     }
 }

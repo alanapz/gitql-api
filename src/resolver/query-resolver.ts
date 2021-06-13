@@ -2,12 +2,13 @@ import { Args, Query, Resolver } from "@nestjs/graphql";
 import { PersistentCacheService } from "src/cache/persistent-cache.service";
 import { stringNotNullNotEmpty } from "src/check";
 import { ConfigService } from "src/config/config.service";
+import { TrunkConfigService } from "src/config/trunk-config/trunk-config.service";
+import { WebUrlService } from "src/config/web-url/web-url.service";
 import { GitService } from "src/git/git.service";
 import { RepositoryModel } from "src/repository";
 import { RepositoryModelImpl } from "src/repository/repository-model-impl";
 import { RepositoryService } from "src/repository/repository.service";
 import { ioUtils } from "src/utils/io-utils";
-import { WebUrlService } from "src/weburl/web-url.service";
 
 const fs = require("fs/promises");
 const path = require("path");
@@ -19,6 +20,7 @@ export class QueryResolver {
         private readonly configService: ConfigService,
         private readonly gitService: GitService,
         private readonly webUrlService: WebUrlService,
+        private readonly trunkConfigService: TrunkConfigService,
         private readonly cacheService: PersistentCacheService,
         private readonly repoService: RepositoryService) {
     }
@@ -55,7 +57,12 @@ export class QueryResolver {
             }
 
             if (await this.gitService.isGitRepoPath(filePath)) {
-                repositories.push(new RepositoryModelImpl(filePath, this.gitService, this.webUrlService, this.cacheService));
+                repositories.push(new RepositoryModelImpl(
+                    filePath,
+                    this.gitService,
+                    this.webUrlService,
+                    this.trunkConfigService,
+                    this.cacheService));
                 continue;
             }
 

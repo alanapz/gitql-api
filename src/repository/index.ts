@@ -1,11 +1,12 @@
 import { PersistentCacheService } from "src/cache/persistent-cache.service";
+import { TrunkConfigHandler } from "src/config/trunk-config";
+import { WebUrlHandler } from "src/config/web-url";
+import { WebUrlService } from "src/config/web-url/web-url.service";
 import { GitWorkingDirectoryItemStatus } from "src/generated/graphql";
 import { BranchRef, GitPrincipal, Ref, RefDistance, StashRef, TagRef, TrackingBranchRef } from "src/git";
 import { GitConfigFile } from "src/git/git-config-file";
 import { GitService } from "src/git/git.service";
 import { IfNotFound } from "src/utils/utils";
-import { WebUrlHandler } from "src/weburl";
-import { WebUrlService } from "src/weburl/web-url.service";
 
 export interface AnnotatedTagModel {
     id: string;
@@ -66,12 +67,16 @@ export interface BranchRefModel extends RefModel {
     kind: "BRANCH";
     name: string;
     upstream: Promise<TrackingBranchRefModel>;
+    parent: Promise<TrackingBranchRefModel>;
 }
 
 export interface TrackingBranchRefModel extends RefModel {
     kind: "TRACKING";
+    ref: TrackingBranchRef;
     remote: Promise<RemoteModel>;
     name: string;
+    isTrunk: Promise<boolean>;
+    parent: Promise<TrackingBranchRefModel>;
     webUrl: Promise<WebUrlModel>;
 }
 
@@ -162,6 +167,7 @@ export interface RepositoryModel {
     gitConfig: Promise<GitConfigFile>;
     workingDirectory: Promise<WorkingDirectoryModel>;
     webUrls: Promise<WebUrlModel[]>;
+    trunkConfigHandler: Promise<TrunkConfigHandler>;
     gitService: GitService;
     webUrlService: WebUrlService;
     cacheService: PersistentCacheService;

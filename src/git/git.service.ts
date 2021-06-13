@@ -26,6 +26,9 @@ const recordSeperator = "¶";
 @Injectable()
 export class GitService {
 
+    // Max distance while searching for merge base
+    private static readonly MAX_SEARCH_DEPTH = 1000;
+
     async isGitRepoPath(repoPath: string): Promise<boolean> {
         stringNotNullNotEmpty(repoPath, "repoPath");
         //
@@ -239,7 +242,13 @@ export class GitService {
         const sourceCommits: string[] = [];
         const targetCommits: string[] = [];
 
+        let depth = 1;
+
         while (true) {
+
+            if (++depth > GitService.MAX_SEARCH_DEPTH) {
+                return null;
+            }
 
             // Handle loops (see end of loop - a branch with no first-parent is it's own first-parent)
             if (sourceCommits.includes(sourceCommitId) && targetCommits.includes(targetCommitId)) {

@@ -1,7 +1,7 @@
+import { WebUrlHandler } from "src/config/web-url";
 import { CommitModel, TagRefModel, TrackingBranchRefModel } from "src/repository";
-import { WebUrlHandler } from "src/weburl";
 
-export class NullWebUrlHandler implements WebUrlHandler {
+export class DefaultWebUrlHandler implements WebUrlHandler {
 
     get repositoryUrl(): string {
         return null;
