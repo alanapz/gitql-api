@@ -17,13 +17,9 @@ export class RepositoryUtils {
         }))).then(results => results.filter(result => !! result.url));
     }
 
-    static async calculateDistance(repository: RepositoryModel, source: Ref, target: Ref): Promise<RefDistanceModel> {
+    static calculateDistance(repository: RepositoryModel, source: Ref, target: Ref): Promise<RefDistanceModel> {
 
-        const start = Date.now();
-
-        console.log(`start ${source.refName} -> ${target.refName}`);
-
-        const result = await repository.buildRefDistance(source, target, async () => {
+        return repository.buildRefDistance(source, target, async () => {
 
             const [sourceCommitId, targetCommitId] = await Promise.all([
                 (await repository.lookupRef(source, 'throw')).commitId,
@@ -53,8 +49,5 @@ export class RepositoryUtils {
                     mergeBaseId: distance.mergeBase};
             });
         });
-
-        console.log(`${Date.now() - start} end ${source.refName} -> ${target.refName} ${result}`);
-        return result;
     }
 }

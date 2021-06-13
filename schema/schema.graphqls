@@ -33,8 +33,6 @@ type GitBranch implements GitRef {
     branchName: String!
     upstream: GitTrackingBranch
     upstreamDistance: GitRefDistance
-    parent: GitTrackingBranch
-    parentDistance: GitRefDistance
     """eg: refs/heads/main (inherited from GitRef)"""
     refName: String!
     """Same as branchName (inherited from GitRef)"""
