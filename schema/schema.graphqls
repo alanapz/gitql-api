@@ -22,7 +22,10 @@ type Query {
 }
 
 type GQLConfig {
-    repoRoot: String!
+    """The root folder used to search repositories"""
+    workspaceRoot: String!
+    """The repository root folder as it appears on the host (For containerised applications)"""
+    hostWorkspaceRoot: String!
 }
 
 type GitBlob implements GitObject {
@@ -102,6 +105,7 @@ type GitRemote {
 
 type GitRepository {
     path: String!
+    hostPath: String!
     commit(id: String!): GitCommit
     recentCommits(count: Int!):  [GitCommit!]!
     blob(id: String!): GitBlob

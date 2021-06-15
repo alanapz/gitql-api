@@ -3,15 +3,16 @@ version: "3"
 services:
   gitql-api:
     container_name: gitql-api
-    image: alanmpinder/gitql-api:20210613
+    image: alanmpinder/gitql-api:latest
     ports:
       - "3000:3000"
     environment:
       - GIT_URL=https://github.com/alanapz/gitql-api.git
       - GIT_BRANCH=main
+      - HOST_WORKSPACE_ROOT
     volumes:
       - "gitql-api-data:/gitql-api"
-      - "${GQL_ROOT}:/repos"
+      - "${HOST_WORKSPACE_ROOT}:/workspace"
 
 volumes:
   gitql-api-data:

@@ -1,1 +1,2 @@
 *.sh eol=lf
+*.yaml eol=lf

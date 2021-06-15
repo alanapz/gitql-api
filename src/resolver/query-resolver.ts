@@ -33,13 +33,13 @@ export class QueryResolver {
     @Query("repository")
     async openRepository(@Args("path") relativePath: string): Promise<RepositoryModel> {
         stringNotNullNotEmpty(relativePath, "relativePath");
-        return this.repoService.openRepository(path.join(this.configService.repoRoot, relativePath));
+        return this.repoService.openRepository(path.join(this.configService.workspaceRoot, relativePath));
     }
 
     @Query("searchRepositories")
     async allRepositories(): Promise<RepositoryModel[]> {
         const repositories: RepositoryModel[] = [];
-        await this.recurseFolder(0, this.configService.repoRoot, repositories);
+        await this.recurseFolder(0, this.configService.workspaceRoot, repositories);
         return repositories;
     }
 

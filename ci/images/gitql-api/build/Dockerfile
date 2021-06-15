@@ -1,5 +1,5 @@
 # Work image, entrypoint reclones repo if necessary
-FROM docker.io/alanmpinder/gitql-api-base:20210613
+FROM docker.io/alanmpinder/gitql-api-base:latest
 
 EXPOSE 3000
 

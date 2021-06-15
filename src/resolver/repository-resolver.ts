@@ -29,7 +29,12 @@ export class RepositoryResolver {
 
     @ResolveField("path")
     getPath(@Parent() model: RepositoryModel): Promise<string> {
-        return Promise.resolve(path.relative(this.configService.repoRoot, model.path));
+        return Promise.resolve(path.relative(this.configService.workspaceRoot, model.path));
+    }
+
+    @ResolveField("hostPath")
+    getHostPath(@Parent() model: RepositoryModel): Promise<string> {
+        return Promise.resolve(path.join(this.configService.hostWorkspaceRoot, path.relative(this.configService.workspaceRoot, model.path)));
     }
 
     @ResolveField("commit")

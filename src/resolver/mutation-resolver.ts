@@ -17,7 +17,7 @@ export class MutationResolver {
     @Mutation("repository")
     async openRepository(@Args("path") relativePath: string): Promise<RepositoryModel> {
         stringNotNullNotEmpty(relativePath, "relativePath");
-        return this.repoService.openRepository(path.join(this.configService.repoRoot, relativePath));
+        return this.repoService.openRepository(path.join(this.configService.workspaceRoot, relativePath));
     }
 }
 
