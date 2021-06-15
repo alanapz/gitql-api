@@ -4,14 +4,21 @@ import { stringNotNullNotEmpty } from "src/check";
 @Injectable()
 export class ConfigService {
 
-    private readonly _repoRoot: string;
+    private readonly _workspaceRoot: string;
+
+    private readonly _hostWorkspaceRoot: string;
 
     constructor() {
-        this._repoRoot = stringNotNullNotEmpty(process.env["GQL_ROOT"], "'GQL_ROOT' not defined");
+        this._workspaceRoot = stringNotNullNotEmpty(process.env["WORKSPACE_ROOT"], "'WORKSPACE_ROOT' not defined");
+        this._hostWorkspaceRoot = stringNotNullNotEmpty(process.env["HOST_WORKSPACE_ROOT"] || process.env["WORKSPACE_ROOT"], "'HOST_WORKSPACE_ROOT' not defined");
     }
 
-    get repoRoot(): string {
-        return this._repoRoot;
+    get workspaceRoot(): string {
+        return this._workspaceRoot;
+    }
+
+    get hostWorkspaceRoot(): string {
+        return this._hostWorkspaceRoot;
     }
 
     get maxSearchDepth(): number {

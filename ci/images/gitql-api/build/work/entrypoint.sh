@@ -2,12 +2,12 @@
 
 set -euo pipefail
 
-GQL_ROOT="/repos"
-export GQL_ROOT
+WORKSPACE_ROOT="/workspace"
+export WORKSPACE_ROOT
 
-if [[ ! -d "${GQL_ROOT}" ]]
+if [[ ! -d "${WORKSPACE_ROOT}" ]]
 then
-    echo "${GQL_ROOT} not mapped"
+    echo "${WORKSPACE_ROOT} not mapped"
     exit 1
 fi
 

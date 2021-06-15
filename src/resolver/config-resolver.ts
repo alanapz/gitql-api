@@ -8,9 +8,14 @@ export class ConfigResolver {
 
     }
 
-    @ResolveField("repoRoot")
-    getConfig(): Promise<string> {
-        return Promise.resolve(this.configService.repoRoot);
+    @ResolveField("workspaceRoot")
+    getWorkspaceRoot(): Promise<string> {
+        return Promise.resolve(this.configService.workspaceRoot);
+    }
+
+    @ResolveField("hostWorkspaceRoot")
+    getHostWorkspaceRoot(): Promise<string> {
+        return Promise.resolve(this.configService.hostWorkspaceRoot);
     }
 }
 
