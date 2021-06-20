@@ -6,7 +6,7 @@ export class TreeItemSubtreeModelImpl implements TreeItemSubtreeModel {
 
     readonly kind = "SUBTREE";
 
-    constructor(public readonly tree: TreeModel, public readonly name: string, public readonly mode: number, public readonly subtreeId: string) {
+    constructor(readonly tree: TreeModel, readonly name: string, readonly mode: number, readonly subtreeId: string) {
 
     }
 

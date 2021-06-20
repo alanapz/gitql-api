@@ -247,7 +247,7 @@ export class GitService {
         while (true) {
 
             if (++depth > GitService.MAX_SEARCH_DEPTH) {
-                return null;
+                return {mergeBase: null, ahead: -1, behind: -1};
             }
 
             // Handle loops (see end of loop - a branch with no first-parent is it's own first-parent)

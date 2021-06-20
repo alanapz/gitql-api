@@ -21,4 +21,20 @@ export class BranchRefResolver extends RefResolver {
         const upstream = await model.upstream;
         return (upstream && RepositoryUtils.calculateDistance(model.repository, model.ref, upstream.ref));
     }
+
+    @ResolveField("isTrunk")
+    isTrunk(@Parent() model: BranchRefModel): Promise<boolean> {
+        return model.isTrunk;
+    }
+
+    @ResolveField("parent")
+    getParent(@Parent() model: BranchRefModel): Promise<TrackingBranchRefModel> {
+        return model.parent;
+    }
+
+    @ResolveField("parentDistance")
+    async getParentDistance(@Parent() model: BranchRefModel): Promise<RefDistanceModel> {
+        const parent = await model.parent;
+        return (parent && RepositoryUtils.calculateDistance(model.repository, model.ref, parent.ref));
+    }
 }

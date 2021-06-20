@@ -6,7 +6,7 @@ export class TreeItemBlobModelImpl implements TreeItemBlobModel {
 
     readonly kind = "BLOB";
 
-    constructor(public readonly tree: TreeModel, public readonly name: string, public readonly mode: number, public readonly blobId: string) {
+    constructor(readonly tree: TreeModel, readonly name: string, readonly mode: number, readonly blobId: string) {
 
     }
 

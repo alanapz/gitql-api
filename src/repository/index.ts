@@ -67,6 +67,8 @@ export interface BranchRefModel extends RefModel {
     kind: "BRANCH";
     name: string;
     upstream: Promise<TrackingBranchRefModel>;
+    isTrunk: Promise<boolean>;
+    parent: Promise<TrackingBranchRefModel>;
 }
 
 export interface TrackingBranchRefModel extends RefModel {
@@ -199,6 +201,7 @@ export interface RemoteModel {
     fetchUrl: Promise<string>;
     pushUrls: Promise<string[]>;
     webUrlHandler: Promise<WebUrlHandler>;
+    branches: Promise<TrackingBranchRefModel[]>;
 }
 
 export interface WebUrlModel {
