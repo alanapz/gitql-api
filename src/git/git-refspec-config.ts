@@ -10,7 +10,7 @@ export class GitRefspecConfigImpl implements GitRefspecConfig {
 
     private readonly localPattern: string;
 
-    constructor(public readonly value: string) {
+    constructor(readonly value: string) {
 
         // eg: +refs/heads/qa*:refs/remotes/origin/qa*
         // ("remote" is branch on the server, local is client remote-tracking branch)

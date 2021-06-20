@@ -77,11 +77,11 @@ export class RepositoryModelImpl implements RepositoryModel {
     private readonly _cachedRefDistances = asyncMap<string, RefDistanceModel>();
     private readonly _cachedWorkingDirectories = asyncMap<string, WorkingDirectoryModel>();
 
-    constructor(public readonly path: string,
-                public readonly gitService: GitService,
-                public readonly webUrlService: WebUrlService,
-                public readonly trunkConfigService: TrunkConfigService,
-                public readonly cacheService: PersistentCacheService) {
+    constructor(readonly path: string,
+                readonly gitService: GitService,
+                readonly webUrlService: WebUrlService,
+                readonly trunkConfigService: TrunkConfigService,
+                readonly cacheService: PersistentCacheService) {
         stringNotNullNotEmpty(path, 'path');
     }
 

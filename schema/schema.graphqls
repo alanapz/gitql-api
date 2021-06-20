@@ -15,6 +15,18 @@ input GitBranchFilter {
     upstreamConfigured: Boolean
 }
 
+
+"""A ref is a name that points to a commit (except for certain types of tags)"""
+interface GitRef {
+    refName: String!
+    displayName: String!
+    repository: GitRepository!
+    commit: GitCommit
+    """List all first-parent ancestors of the head of this ref"""
+    ancestors(count: Int!):  [GitCommit!]!
+    distance(refName: String): GitRefDistance
+}
+
 type Query {
     config: GQLConfig!
     repository(path: String!): GitRepository!
@@ -41,6 +53,9 @@ type GitBranch implements GitRef {
     branchName: String!
     upstream: GitTrackingBranch
     upstreamDistance: GitRefDistance
+    isTrunk: Boolean!
+    parent: GitTrackingBranch
+    parentDistance: GitRefDistance
     """eg: refs/heads/main (inherited from GitRef)"""
     refName: String!
     """Same as branchName (inherited from GitRef)"""
@@ -79,16 +94,6 @@ interface GitObject {
     repository: GitRepository!
 }
 
-"""A ref is a name that points to a commit (except for certain types of tags)"""
-interface GitRef {
-    refName: String!
-    displayName: String!
-    repository: GitRepository!
-    commit: GitCommit
-    """List all first-parent ancestors of the head of this ref"""
-    ancestors(count: Int!):  [GitCommit!]!
-    distance(refName: String): GitRefDistance
-}
 
 type GitRefDistance {
     mergeBase: GitCommit!

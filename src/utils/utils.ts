@@ -39,11 +39,15 @@ export function record_to_map<K extends string, V>(obj: Record<K, V>): Map<K, V>
     return map;
 }
 
-export type IfNotFound = 'throw' | 'null';
+export type IfNotFound = 'throw' | 'warn' | 'null';
 
 export function if_not_found<T>(params: {value: IfNotFound, result: T, error: () => Error}): T|never {
     if (!params.result && params.value === 'throw') {
         throw params.error();
+    }
+    if (!params.result && params.value === 'warn') {
+        console.warn(params.error().message);
+        return null;
     }
     return params.result;
 }

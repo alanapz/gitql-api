@@ -1,6 +1,6 @@
-import { TrackingBranchRef } from "src/git";
+import { BranchRefModel, TrackingBranchRefModel } from "src/repository";
 
 export interface TrunkConfigHandler {
-    isTrunk: (ref: TrackingBranchRef) => Promise<boolean>;
-    resolveParent: (ref: TrackingBranchRef) => Promise<TrackingBranchRef>;
+    isTrunk: (ref: BranchRefModel | TrackingBranchRefModel) => Promise<boolean>;
+    resolveParent: (ref: BranchRefModel | TrackingBranchRefModel) => Promise<TrackingBranchRefModel>;
 }
