@@ -5,6 +5,7 @@ import { GitModule } from "src/git/git.module";
 import { RepositoryModule } from "src/repository/repository.module";
 import { BlobResolver } from "src/resolver/blob-resolver";
 import { BranchRefResolver } from "src/resolver/branch-ref-resolver";
+import { BranchResolverMutator } from "src/resolver/branch-resolver-mutator";
 import { CommitResolver } from "src/resolver/commit-resolver";
 import { ConfigResolver } from "src/resolver/config-resolver";
 import { MutationResolver } from "src/resolver/mutation-resolver";
@@ -32,6 +33,7 @@ import { WorkingDirectoryResolver } from "src/resolver/working-directory-resolve
       MutationResolver,
       BlobResolver,
       BranchRefResolver,
+      BranchResolverMutator,
       CommitResolver,
       ConfigResolver,
       PrincipalResolver,
