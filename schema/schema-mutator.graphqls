@@ -1,9 +1,16 @@
+scalar MutationResult
+
 type Mutation {
-    repository(path: String!): GitRepositoryMutator
+    repository(path: String!): GQLRepositoryMutator
 }
 
-type GitRepositoryMutator {
-    path: String!
-    fetch: GitRepository!
-    cleanWorkingDirectory: GitRepository!
+type GQLRepositoryMutator {
+    branch(name: String!): GQLBranchMutator
+    fetch: MutationResult!
+    cleanWorkingDirectory: MutationResult!
+}
+
+type GQLBranchMutator {
+    """Deletes the specified local branch"""
+    delete: MutationResult!
 }

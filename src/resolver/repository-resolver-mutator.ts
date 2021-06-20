@@ -1,27 +1,31 @@
-import { Parent, ResolveField, Resolver } from "@nestjs/graphql";
-import { ConfigService } from "src/config/config.service";
+import { Args, Parent, ResolveField, Resolver } from "@nestjs/graphql";
+import { stringNotNullNotEmpty } from "src/check";
 import { GitService } from "src/git/git.service";
-import { RepositoryModel } from "src/repository";
-import { RepositoryService } from "src/repository/repository.service";
+import { GitUtils } from "src/git/utils";
+import { BranchRefModel, RepositoryModel } from "src/repository";
 
-@Resolver("GitRepositoryMutator")
+@Resolver("GQLRepositoryMutator")
 export class RepositoryResolverMutator {
 
-    constructor(
-        private readonly gitService: GitService,
-        private readonly configService: ConfigService,
-        private readonly repoService: RepositoryService) {
+    constructor(private readonly gitService: GitService) {
+
+    }
+
+    @ResolveField("branch")
+    getBranchByName(@Parent() model: RepositoryModel, @Args('name') branchName: string): Promise<BranchRefModel> {
+        stringNotNullNotEmpty(branchName, 'branchName');
+        return model.lookupBranch(GitUtils.toBranchRef(branchName), 'null');
     }
 
     @ResolveField("fetch")
-    async fetchRepository(@Parent() model: RepositoryModel): Promise<RepositoryModel> {
+    async fetchRepository(@Parent() model: RepositoryModel): Promise<unknown> {
         await this.gitService.fetchRepository(model.path);
-        return this.repoService.openRepository(model.path);
+        return true;
     }
 
     @ResolveField("cleanWorkingDirectory")
-    async cleanWorkingDirectory(@Parent() model: RepositoryModel): Promise<RepositoryModel> {
+    async cleanWorkingDirectory(@Parent() model: RepositoryModel): Promise<unknown> {
         await this.gitService.cleanWorkingDirectory(model.path);
-        return this.repoService.openRepository(model.path);
+        return true;
     }
 }

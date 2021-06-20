@@ -328,8 +328,11 @@ export class GitService {
     }
 
     async cleanWorkingDirectory(repoPath: string): Promise<void> {
-        stringNotNullNotEmpty(repoPath, "repoPath");
         await this.gitExecute(['-C', repoPath, 'clean', '-ffddx', '--quiet']);
+    }
+
+    async deleteBranch(repoPath: string, branchName: string): Promise<void> {
+        await this.gitExecute(['-C', repoPath, 'branch', '--delete', branchName]);
     }
 
     private gitExecute(args: string[], input?: string): Promise<string> {
