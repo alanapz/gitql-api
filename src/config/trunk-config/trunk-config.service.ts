@@ -29,11 +29,11 @@ export class TrunkConfigService {
         }
 
         const handlers = [
-            () => ViaviTrunkConfigProvider.matches(fetchUrl),
+            () => ViaviTrunkConfigProvider.matches(repository),
         ];
 
         for (const handler of handlers) {
-            const result = handler();
+            const result = await handler();
             if (result) {
                 return result;
             }

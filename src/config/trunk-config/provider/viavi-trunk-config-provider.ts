@@ -1,4 +1,5 @@
 import { TrunkConfigProvider } from "src/config/trunk-config/trunk-config-provider";
+import { RepositoryModel } from "src/repository";
 
 export class ViaviTrunkConfigProvider implements TrunkConfigProvider {
 
@@ -9,7 +10,7 @@ export class ViaviTrunkConfigProvider implements TrunkConfigProvider {
     }
 
     isTrunk(name: string): boolean {
-        return name === 'main' || !! name.match("^[a-z]{2,}\\d{4}$") || !! name.match("^release/");
+        return ViaviTrunkConfigProvider._isTrunk(name);
     }
 
     // noinspection JSUnusedLocalSymbols
@@ -21,14 +22,25 @@ export class ViaviTrunkConfigProvider implements TrunkConfigProvider {
         return (matcher && matcher.groups["trunk"]);
     }
 
-    public static matches(fetchUrl: string): TrunkConfigProvider {
+    public static async matches(repository: RepositoryModel): Promise<TrunkConfigProvider> {
 
-        const sshMatcher = fetchUrl.match("^ssh://git@cosgit1\\.ds\\.jdsu\\.net:7999/.+");
+        // We consider ourselves a Viavi multi-trunk repo if we have multiple trunk tracking branches on origin
+        const origin = await repository.lookupRemote("origin", "null");
 
-        if (sshMatcher) {
+        if (!origin) {
+            return null;
+        }
+
+        const trunkBranches = (await origin.branches).filter(branch => ViaviTrunkConfigProvider._isTrunk(branch.name));
+
+        if (trunkBranches.length > 1) {
             return ViaviTrunkConfigProvider.INSTANCE;
         }
 
         return null;
+    }
+
+    private static _isTrunk(name: string): boolean {
+        return name === 'main' || !! name.match("^[a-z]{2,}\\d{4}$") || !! name.match("^release/");
     }
 }
