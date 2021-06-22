@@ -27,7 +27,7 @@ const graphQl: GqlModuleOptions = {
     requireResolversForResolveType: "ignore",
   },
   cors: {
-    origin: true,
+    origin: (process.env["CORS_ORIGIN"] || 'http://localhost:4200'),
     credentials: true,
   },
 };

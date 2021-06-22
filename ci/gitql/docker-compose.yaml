@@ -10,6 +10,7 @@ services:
       - GIT_URL=https://github.com/alanapz/gitql-api.git
       - GIT_BRANCH=main
       - HOST_WORKSPACE_ROOT
+      - CORS_ORIGIN
     volumes:
       - "gitql-api-data:/gitql-api"
       - "${HOST_WORKSPACE_ROOT}:/workspace"
