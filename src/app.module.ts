@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { GraphQLModule } from "@nestjs/graphql";
 import { GqlModuleOptions } from "@nestjs/graphql/dist/interfaces/gql-module-options.interface";
+import { ErrorInterceptor } from "src/graphql/error-interceptor";
 import { GitContextInterceptor } from "src/query/ctx/GitContextInterceptor";
 import { ResolverModule } from "src/resolver/resolver.module";
 import { AppController } from './app.controller';
@@ -38,6 +39,10 @@ const graphQl: GqlModuleOptions = {
   providers: [{
     provide: APP_INTERCEPTOR,
     useClass: GitContextInterceptor,
-  }],
+  },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ErrorInterceptor,
+    }],
 })
 export class AppModule {}
