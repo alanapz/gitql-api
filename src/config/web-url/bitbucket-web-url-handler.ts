@@ -44,7 +44,7 @@ export class BitbucketWebUrlHandler implements WebUrlHandler {
     public static matches(url: string): WebUrlHandler {
 
         // ssh://git@cosgit1.ds.jdsu.net:7999/onmsi/topaz-app.git
-        const sshMatcher = url.match("^ssh://.+@(?<server>.+)(:\d)?/(?<project>.+)/(?<repo>.+).git$");
+        const sshMatcher = url.match("^ssh://git@(?<server>.+):7999/(?<project>.+)/(?<repo>.+).git$");
         if (sshMatcher) {
             return new BitbucketWebUrlHandler(
                 sshMatcher.groups["server"],
