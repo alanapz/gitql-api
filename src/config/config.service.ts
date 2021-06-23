@@ -28,4 +28,10 @@ export class ConfigService {
     isPathSkipped(value: string): boolean {
         return value.includes("node_modules");
     }
+
+    logInfo(message: any[]): void {
+        if (process.env["GQL_DEBUG"]) {
+            console.log(... message);
+        }
+    }
 }

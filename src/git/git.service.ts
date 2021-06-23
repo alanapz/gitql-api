@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { error, stringNotNullNotEmpty } from "src/check";
+import { ConfigService } from 'src/config/config.service';
 import {
     isBranchRef,
     isStashRef,
@@ -28,6 +29,10 @@ export class GitService {
 
     // Max distance while searching for merge base
     private static readonly MAX_SEARCH_DEPTH = 1000;
+
+    constructor(private readonly configService: ConfigService) {
+
+    }
 
     async isGitRepoPath(repoPath: string): Promise<boolean> {
         stringNotNullNotEmpty(repoPath, "repoPath");
@@ -341,7 +346,7 @@ export class GitService {
 
             const { spawn } = require('child_process');
 
-            console.log("git", ...args);
+            this.configService.logInfo(["git", ...args]);
 
             const cmd = spawn('git', args);
 
@@ -360,7 +365,7 @@ export class GitService {
 
             cmd.on('close', (code) => {
                 if (code !== 0 || error.length) {
-                    reject({code, error});
+                    reject({code, error, args});
                     return;
                 }
 
