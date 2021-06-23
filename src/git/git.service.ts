@@ -359,13 +359,8 @@ export class GitService {
             });
 
             cmd.on('close', (code) => {
-                if (code !== 0) {
-                    reject(code);
-                    return;
-                }
-
-                if (error.length) {
-                    reject(error);
+                if (code !== 0 || error.length) {
+                    reject({code, error});
                     return;
                 }
 
